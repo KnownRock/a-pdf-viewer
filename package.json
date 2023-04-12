@@ -58,6 +58,7 @@
     "vite": "^4.2.0"
   },
   "dependencies": {
+    "hash-wasm": "^4.9.0",
     "idb-keyval": "^6.2.0",
     "md5": "^2.3.0",
     "pdfjs-dist": "^3.5.141",
