@@ -26,7 +26,8 @@ importScripts('/workbox-sw.js')
 // install
 
 
-workbox.precaching.precacheAndRoute([{
-  url: '/'
-
-}])
+workbox.precaching.precacheAndRoute([
+  // {
+  //   url: '/'
+  // }
+])
