@@ -1,7 +1,10 @@
 import { writable } from 'svelte/store'
 
 const store = writable<{
-  isPermissionGranted: boolean
-}>
+  isShow: boolean
+  callback?: (resourceDir: FileSystemDirectoryHandle | null) => void
+}>({
+      isShow: false
+    })
 
 export default store

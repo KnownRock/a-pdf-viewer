@@ -1,14 +1,48 @@
 <script lang="ts">
-  import Dialog, { Actions, Header, Title, Content } from '@smui/dialog'
-  import IconButton from '@smui/icon-button'
-  import { onMount } from 'svelte';
+  import Dialog, { Header, Title, Content, Actions } from '@smui/dialog'
+  import Button from '@smui/button'
   import { t } from 'svelte-i18n'
   let open = false
-  function closeHandler(){}
+  function closeHandler () {
+    open = false
 
+    callback(null)
+
+    callback = (resourceDir: FileSystemDirectoryHandle | null) => {
+      if (resourceDir) {
+        console.log(resourceDir)
+      }
+    }
+  }
+
+  import { permission } from '../store'
+
+  let callback = (resourceDir: FileSystemDirectoryHandle | null) => {
+    if (resourceDir) {
+      console.log(resourceDir)
+    }
+  }
+
+  permission.subscribe((value) => {
+    open = value.isShow
+    callback =
+      value.callback ??
+      ((resourceDir: FileSystemDirectoryHandle | null) => {
+        if (resourceDir) {
+          console.log(resourceDir)
+        }
+      })
+  })
+
+  async function getPermission () {
+    const handle = await window.showDirectoryPicker({
+      mode: 'readwrite',
+      startIn: 'documents'
+    })
+    callback(handle)
+  }
 
 </script>
-
 
 <Dialog
   bind:open
@@ -21,7 +55,10 @@
     <Title id="fullscreen-title">
       {$t('permission.dialog.title')}
     </Title>
-    <IconButton action="close" class="material-icons">close</IconButton>
   </Header>
-  <Content>123</Content>
+  <Content>
+  </Content>
+  <Actions>
+    <Button on:click={getPermission}>{$t('permission.dialog.button')}</Button>
+  </Actions>
 </Dialog>
