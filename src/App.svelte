@@ -5,12 +5,17 @@
   import { isLoading } from 'svelte-i18n'
 
   import { resource } from './store'
+  import Viewer from './lib/Viewer.svelte'
 
   let resourceDir: FileSystemDirectoryHandle | null = null
   resource.subscribe((value) => {
     resourceDir = value.resourceDir
   })
 
+  import { Router, Route } from 'svelte-routing'
+
+
+  const url = ''
 </script>
 
 {#if $isLoading}
@@ -20,25 +25,23 @@
   <PermissionCheck />
 
   {#if resourceDir}
-    <main>
-      <BookShelf resourceDir={resourceDir} />
-    </main>
+    <Router url="{url}">
+      <Route path="/book/:id" let:params >
+        <Viewer resourceDir={resourceDir} bookId={params.id} />
+      </Route>
+
+      <Route path="/*" >
+        <BookShelf resourceDir={resourceDir}  />
+      </Route>
+    </Router>
+
   {:else}
     <div>no resourceDir</div>
   {/if}
+
+  
 {/if}
 
 <style>
-  main{
-    height: 100vh;
-    width: 100vw;
 
-    overflow: hidden;
-
-    /* display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center; */
-  }
-  
 </style>
