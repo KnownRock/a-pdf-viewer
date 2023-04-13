@@ -62,6 +62,7 @@
     "idb-keyval": "^6.2.0",
     "md5": "^2.3.0",
     "pdfjs-dist": "^3.5.141",
+    "svelte-routing": "^1.6.0",
     "uuid": "^9.0.0"
   }
 }
