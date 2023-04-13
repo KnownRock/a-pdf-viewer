@@ -82,23 +82,87 @@ async function saveState (): Promise<void> {
   if (resourceDir == null) {
     return
   }
+
+  const events = get(store).events
+  const isDupEventsDict: Record<string, boolean> = {}
+  const newEvents = [] as Event[]
+  for (let i = events.length - 1; i >= 0; i--) {
+    const event = events[i]
+    const key = `${event.type}-${event.payload.id}-${event.type === 'update' ? event.payload.prop : ''}`
+    if (isDupEventsDict[key]) {
+      continue
+    }
+    isDupEventsDict[key] = true
+    newEvents.push(event)
+  }
+  newEvents.sort((a, b) => a.timestamp - b.timestamp)
+
+  store.update((state) => {
+    state.events = newEvents
+    return state
+  })
+
   await saveObjectToFile(resourceDir, 'books.json', get(store).books)
-  await saveObjectToFile(resourceDir, 'events.json', get(store).events)
+  await saveObjectToFile(resourceDir, 'events.json', newEvents)
 }
 
-export async function updateBook (id: Book['id'], prop: 'title', title: Book['title']): Promise<void> {
+export async function updateBookProgress (id: Book['id'], progress: Book['progress']): Promise<void> {
   store.update((state) => {
-    state.books[id].title = title
+    state.books[id].progress = progress
     state.books[id].updateAt = Date.now()
+
     state.events.push({
       type: 'update',
       payload: {
         id,
-        prop,
+        prop: 'progress',
+        progress
+      },
+      timestamp: Date.now()
+    })
+
+    return state
+  })
+
+  await saveState()
+}
+
+export async function updateBookTitle (id: Book['id'], title: Book['title']): Promise<void> {
+  store.update((state) => {
+    state.books[id].title = title
+    state.books[id].updateAt = Date.now()
+
+    state.events.push({
+      type: 'update',
+      payload: {
+        id,
+        prop: 'title',
         title
       },
       timestamp: Date.now()
     })
+
+    return state
+  })
+
+  await saveState()
+}
+
+export async function updateBookState (id: Book['id'], bookState: Book['state']): Promise<void> {
+  store.update((state) => {
+    state.books[id].state = bookState
+    state.books[id].updateAt = Date.now()
+
+    state.events.push({
+      type: 'update',
+      payload: {
+        id,
+        prop: 'state',
+        state: bookState
+      },
+      timestamp: Date.now()
+    })
+
     return state
   })
 

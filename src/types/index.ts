@@ -3,7 +3,8 @@ export interface Book {
   id: string
   title: string
 
-  process: number
+  state: 'bookmark' | 'reading' | 'done' | 'trash' | 'new'
+  progress: number
   pages: number
   updateAt: number
 }
@@ -24,9 +25,18 @@ export type Event = ({
   type: 'update'
   payload: {
     id: Book['id']
-    prop: 'process'
-    process: Book['process']
+    prop: 'progress'
+    progress: Book['progress']
+  }
+} | {
+  type: 'update'
+  payload: {
+    id: Book['id']
+    prop: 'state'
+    state: Book['state']
   }
 }) & {
   timestamp: number
 }
+
+export type BooksDiaplayMode = 'all' | 'bookmark' | 'reading' | 'done' | 'trash' | 'new'
