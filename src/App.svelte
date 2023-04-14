@@ -4,16 +4,23 @@
   import PermissionCheck from './lib/PermissionCheck.svelte'
   import { isLoading } from 'svelte-i18n'
 
-  import { resource } from './store'
+  import { simpleFs as simpleFsStore } from './store'
   import Viewer from './lib/Viewer.svelte'
+  import type { SimpleFs } from './types'
 
-  let resourceDir: FileSystemDirectoryHandle | null = null
-  resource.subscribe((value) => {
-    resourceDir = value.resourceDir
+  // let resourceDir: FileSystemDirectoryHandle | null = null
+  // resource.subscribe((value) => {
+  //   resourceDir = value.resourceDir
+  // })
+
+  let simpleFs: SimpleFs | null = null
+  simpleFsStore.subscribe((value) => {
+    simpleFs = value.simpleFs
   })
 
-  import { Router, Route } from 'svelte-routing'
 
+  import { Router, Route } from 'svelte-routing'
+  
 
   const url = ''
 </script>
@@ -24,14 +31,14 @@
   <Loading />
   <PermissionCheck />
 
-  {#if resourceDir}
+  {#if simpleFs}
     <Router url="{url}">
       <Route path="/book/:id" let:params >
-        <Viewer resourceDir={resourceDir} bookId={params.id} />
+        <Viewer simpleFs={simpleFs} bookId={params.id} />
       </Route>
 
       <Route path="/*" >
-        <BookShelf resourceDir={resourceDir}  />
+        <BookShelf simpleFs={simpleFs}  />
       </Route>
     </Router>
 

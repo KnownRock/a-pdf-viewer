@@ -114,6 +114,7 @@
     color: #fff;
     font-size: 20px;
     cursor: pointer;
+    z-index: 1;
   }
 
   .contorl-left {

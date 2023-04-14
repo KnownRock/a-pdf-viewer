@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Book } from '../types'
+  import type { Book, SimpleFs } from '../types'
   import { onMount } from 'svelte'
   import Paper from '@smui/paper'
   import TextField from '@smui/textfield'
@@ -7,28 +7,36 @@
   import { deleteBook, updateBookState, updateBookTitle } from '../store/state'
   import { t } from 'svelte-i18n'
   import { navigate } from 'svelte-routing'
-  export let resourceDir: FileSystemDirectoryHandle
+  // export let resourceDir: FileSystemDirectoryHandle
+  export let simpleFs: SimpleFs
   export let book: Book
   export let mode: string
   import Ripple from '@smui/ripple'
   // import { viewer } from '../store'
   import bookPng from '../assets/book.png'
-  let cover = ''
+  let cover = bookPng
 
   let bookTitle = book.title
 
   onMount(async () => {
-    const booksFolderHandle = await resourceDir.getDirectoryHandle('books', {
-      create: true
-    })
-    const coverFileHandle = await booksFolderHandle.getFileHandle(`${book.id}.png`, {
-      create: true
-    })
-    const coverFile = await coverFileHandle.getFile()
-    const coverBlob = await coverFile.slice(0, coverFile.size, 'image/png')
-    const coverUrl = URL.createObjectURL(coverBlob)
-    cover = coverUrl
-  })
+    // const booksFolderHandle = await resourceDir.getDirectoryHandle('books', {
+    //   create: true
+    // })
+    // const coverFileHandle = await booksFolderHandle.getFileHandle(`${book.id}.png`, {
+    //   create: true
+    // })
+    // const coverFile = await coverFileHandle.getFile()
+    // const coverBlob = await coverFile.slice(0, coverFile.size, 'image/png')
+    // const coverUrl = URL.createObjectURL(coverBlob)
+    // cover = coverUrl
+
+    const result = await simpleFs.read(`books/${book.id}.png`, 'arrayBuffer')
+    if (result) {
+      const coverBlob = new Blob([result], { type: 'image/png' })
+      const coverUrl = URL.createObjectURL(coverBlob)
+      cover = coverUrl
+    }
+})
 
   function setCurrentBook (book: Book) {
     // viewer.update((value) => {
@@ -56,7 +64,7 @@
             on:click={() => {
               updateBookState(book.id, 'reading')
           }}>
-            undo
+            restore_from_trash
           </IconButton>
 
         {:else}

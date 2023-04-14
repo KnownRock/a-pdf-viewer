@@ -40,3 +40,24 @@ export type Event = ({
 }
 
 export type BooksDiaplayMode = 'all' | 'bookmark' | 'reading' | 'done' | 'trash' | 'new'
+
+export interface SimpleFs {
+  write: (path: string, data: string | ArrayBuffer) => Promise<void>
+  read: (path: string, mode: 'text' | 'arrayBuffer') => Promise<ArrayBuffer | string | undefined>
+  // read: {
+  //   (path: string, mode: 'text'): Promise<string | undefined>
+  //   (path: string, mode: 'arrayBuffer'): Promise<ArrayBuffer | undefined>
+  // }
+  delete: (path: string) => Promise<void>
+  exists: (path: string) => Promise<boolean>
+  list: (path: string) => Promise<string[]>
+
+  init: (
+    ...args: any[]
+  ) => Promise<void>
+}
+
+export enum SimpleFsName {
+  idb = 'idb',
+  fsapi = 'fsapi'
+}

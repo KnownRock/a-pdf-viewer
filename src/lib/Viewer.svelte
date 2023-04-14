@@ -2,7 +2,7 @@
 <script lang="ts">
   import { get, set } from 'idb-keyval'
   import { state } from '../store'
-  import type { Book } from '../types'
+  import type { Book, SimpleFs } from '../types'
   import Page from './Viewer/Page.svelte'
   import type { PDFDocumentProxy } from 'pdfjs-dist'
   import { updateBookProgress, updateBookState } from '../store/state'
@@ -15,22 +15,8 @@
   import IconButton from '@smui/icon-button'
   pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf/pdf.worker.js'
   import { navigate } from 'svelte-routing'
-  export let resourceDir: FileSystemDirectoryHandle
-
-  // viewer.subscribe((value) => {
-  //   bookId = value.bookId
-
-  //   if (bookId) {
-  //     book = svelteStoreGet(state).books[bookId]
-  //   }
-  // })
-
-  // $: {
-  //   if (bookId) {
-  //     book = svelteStoreGet(state).books[bookId]
-  //     debugger
-  //   }
-  // }
+  export let simpleFs: SimpleFs
+  
   
   state.subscribe((value) => {
     if (bookId) {
@@ -40,9 +26,10 @@
     }
   })
 
-
+  // TODO: make scale more smooth
   let scale = 1
   let isLeftMouseDown = false
+  let isNotClick = false
   function handleWheel (event: WheelEvent) {
     if (!(event.ctrlKey || event.metaKey || isLeftMouseDown)) {
       return
@@ -54,12 +41,25 @@
     scale = Math.max(0.1, scale)
     scale = Math.min(5, scale)
 
-    scrollOffset += (event.clientY - scrollOffset) * (oldScale - scale) / oldScale
+    scrollToBehaviour = 'instant'
 
-    set(`${bookId}-scale`, scale)
+    setTimeout(() => {
+      scrollOffset += (event.clientY - scrollOffset) * (oldScale - scale) / oldScale
+
+      set(`${bookId}-scale`, scale)
+    }, 0)
 
     event.preventDefault()
-  }
+}
+
+
+  $:isLeftMouseDown
+    ? (() => {
+        scrollToBehaviour = 'instant'
+      })()
+    : (() => {
+        scrollToBehaviour = 'smooth'
+      })()
 
   function handleMouseDown (event: MouseEvent) {
     if (event.button === 0) {
@@ -67,10 +67,27 @@
     }
   }
 
+  function handleTouchStart () {
+    isLeftMouseDown = true
+  }
+
   function handleMouseUp (event: MouseEvent) {
     if (event.button === 0) {
       isLeftMouseDown = false
+
+      setTimeout(() => {
+        isNotClick = false
+      }, 10)
     }
+  }
+
+  let oldTouchX : number|null = null
+  let oldTouchY : number|null = null
+  function handleTouchEnd () {
+    isLeftMouseDown = false
+
+    oldTouchX = null
+    oldTouchY = null
   }
 
   let progress = 1
@@ -80,8 +97,33 @@
       offsetX += event.movementX
       scrollOffset -= event.movementY
 
+      isNotClick = true
+
       throttledSaveOffsetX(offsetX)
       // throttledSaveOffset(event.clientX)
+    }
+  }
+
+
+  function handleTouchMove (event: TouchEvent) {
+    if (isLeftMouseDown) {
+      if (oldTouchX === null) {
+        oldTouchX = event.touches[0].clientX
+      }
+      if (oldTouchY === null) {
+        oldTouchY = event.touches[0].clientY
+      }
+
+
+      offsetX += event.touches[0].clientX - oldTouchX
+      scrollOffset -= event.touches[0].clientY - oldTouchY
+  
+      oldTouchX = event.touches[0].clientX
+      oldTouchY = event.touches[0].clientY
+
+      isNotClick = true
+
+      throttledSaveOffsetX(offsetX)
     }
   }
 
@@ -108,22 +150,36 @@
   let pdf: PDFDocumentProxy | null = null
   let pdfPageHeight: number = 500
 
+  let isLoaded = false
   async function load () {
-    if (resourceDir === null) {
+    if (isLoaded) {
+      return
+    }
+    isLoaded = true
+
+    if (simpleFs === null) {
       return
     }
     if (bookId === null) {
       return
     }
 
-    const booksFolderHandle = await resourceDir.getDirectoryHandle('books', {
-      create: true
-    })
-    const bookFileHandle = await booksFolderHandle.getFileHandle(`${bookId}.pdf`, {
-      create: true
-    })
-    const file = await bookFileHandle.getFile()
-    const buffer = await file.arrayBuffer()
+
+    const result = await simpleFs.read(`books/${bookId}.pdf`, 'arrayBuffer')
+    if (result === null) {
+      return
+    }
+
+    const buffer = result as ArrayBuffer
+
+    // const booksFolderHandle = await resourceDir.getDirectoryHandle('books', {
+    //   create: true
+    // })
+    // const bookFileHandle = await booksFolderHandle.getFileHandle(`${bookId}.pdf`, {
+    //   create: true
+    // })
+    // const file = await bookFileHandle.getFile()
+    // const buffer = await file.arrayBuffer()
     const p = await pdfjsLib.getDocument(buffer).promise
     const page = await p.getPage(1)
 
@@ -166,26 +222,48 @@
     }
   }
 
-  $: progress && (async () => {
-    scrollOffset = (progress - 1) * pdfPageHeight + await get(`${bookId}-offset-y`) ?? 0
-    await saveScrollOffset()
-  })()
+  // $: progress && (async () => {
+  //   scrollOffset = (progress - 1) * pdfPageHeight +
+  //     // prevent scale change issue
+  //     (await get(`${bookId}-offset-y`) % pdfPageHeight) ??
+  //     0
+  //   await saveScrollOffset()
+  // })()
+
+  async function setScrollOffsetByProgress () {
+    scrollToBehaviour = 'instant'
+    setTimeout(async () => {
+      scrollOffset = (progress - 1) * pdfPageHeight +
+      // prevent scale change issue
+      (await get(`${bookId}-offset-y`) % pdfPageHeight) ??
+      0
+      await saveScrollOffset()
+      scrollToBehaviour = 'smooth'
+    }, 100)
+  }
 
 
   function handleClick () {
-    toggleMenu()
+    if (!isNotClick) {
+      toggleMenu()
+    }
   }
 
   async function getBookBuffer (bookId) : Promise<ArrayBuffer> {
-    const booksFolderHandle = await resourceDir.getDirectoryHandle('books', {
-      create: true
-    })
-    const fileHandle = await booksFolderHandle.getFileHandle(`${bookId}.pdf`, {
-      create: true
-    })
-    const file = await fileHandle.getFile()
-    const buffer = await file.arrayBuffer()
-    return buffer
+    // const booksFolderHandle = await resourceDir.getDirectoryHandle('books', {
+    //   create: true
+    // })
+    // const fileHandle = await booksFolderHandle.getFileHandle(`${bookId}.pdf`, {
+    //   create: true
+    // })
+    // const file = await fileHandle.getFile()
+    // const buffer = await file.arrayBuffer()
+
+    const result = await simpleFs.read(`books/${bookId}.pdf`, 'arrayBuffer')
+    if (!result) {
+      throw new Error('book not found')
+    }
+    return result as ArrayBuffer
   }
 
   async function downloadBook () {
@@ -211,6 +289,9 @@
     URL.revokeObjectURL(url)
   }
 
+  // const scrollToBehaviour = 'auto' as 'smooth' | 'auto'
+  let scrollToBehaviour = 'smooth' as 'smooth' | 'auto' | 'instant'
+
 </script>
 
 {#if book}
@@ -218,8 +299,11 @@
 <div class="viewer" 
   on:wheel={handleWheel}
   on:mousedown={handleMouseDown}
+  on:touchstart={handleTouchStart}
   on:mouseup={handleMouseUp}
+  on:touchend={handleTouchEnd}
   on:mousemove={handleMouseMove}
+  on:touchmove={handleTouchMove}
   on:mouseleave={handleMouseLeave}
   on:click={handleClick}
 
@@ -237,13 +321,22 @@
         width="auto"
         itemCount={pdf.numPages}
         itemSize={pdfPageHeight}
-
+        
+        getKey={index => index}
+        scrollToBehaviour={scrollToBehaviour}
+        
         scrollToIndex={Math.floor(scrollOffset / pdfPageHeight)}
 
         scrollOffset={scrollOffset}
 
         on:afterScroll={async (event) => {
+          console.log('afterScroll', event)
+
           scrollOffset = event.detail.offset
+          // if (scrollToBehaviour === 'smooth') {
+          //   return
+          // }
+
 
           await saveScrollOffset()
         }}
@@ -319,7 +412,29 @@
 
         <div class="menu bottom" on:click={e => { e.stopPropagation() }}>
           <div class="menu-item">
-            <Slider style="width:90%" bind:value={progress} />
+            <div style="width:90%" on:click={
+              // bypass slider change event not fired issue
+              setScrollOffsetByProgress
+            }
+              on:touchend={
+                // bypass slider change event not fired issue
+                setScrollOffsetByProgress
+              }
+            >
+              <Slider
+                style="width:90%"
+                bind:value={progress}
+
+                onclick={e => {
+                  console.log('onclick', e)
+                  e.stopPropagation()
+                }}
+
+                min={1}
+                max={pdf.numPages}
+              />
+            </div>
+
             <span>{progress}/{pdf.numPages}</span>
           </div>
         </div>

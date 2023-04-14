@@ -1,8 +1,9 @@
 <script lang="ts">
-  import type { Book } from '../types'
+  import type { Book, SimpleFs } from '../types'
   import LayoutGrid, { Cell } from '@smui/layout-grid'
   import BookComponent from './Book.svelte'
-  export let resourceDir: FileSystemDirectoryHandle
+  // export let resourceDir: FileSystemDirectoryHandle
+  export let simpleFs: SimpleFs
   export let books: Record<Book['id'], Book>
   // FIXME: use enum
   export let mode : string// BooksDiaplayMode
@@ -25,7 +26,7 @@
 <LayoutGrid>
   {#each bookArray as book (book.id)}
     <Cell span="{4}">
-      <BookComponent resourceDir={resourceDir} book={book} {mode} />
+      <BookComponent simpleFs={simpleFs} book={book} {mode} />
     </Cell>
   {/each} 
 </LayoutGrid>

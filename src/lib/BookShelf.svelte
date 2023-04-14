@@ -2,8 +2,8 @@
   import { sha1 } from 'hash-wasm'
   import { getPdfMetaInfo } from '../utils/pdf'
   import Books from './Books.svelte'
-  import type { Book, Event } from '../types/index'
-  export let resourceDir: FileSystemDirectoryHandle
+  import type { Book, Event, SimpleFs } from '../types/index'
+  
   import { navigate, Router, Route } from 'svelte-routing'
   import { t } from 'svelte-i18n'
   import TopAppBar, { Row, Section, Title } from '@smui/top-app-bar'
@@ -17,8 +17,10 @@
     Title as DrawerTitle,
     Subtitle
   } from '@smui/drawer'
-  import List, { Item, Text } from '@smui/list'
-  
+  import List, { Graphic, Item, Separator, Subheader, Text } from '@smui/list'
+
+  export let simpleFs: SimpleFs
+
   let books = {} as Record<Book['id'], Book>
   let events = [] as Event[]
   
@@ -44,30 +46,9 @@
       hash
     }`)
   
-    // get or create books folder
-    const booksFolderHandle = await resourceDir.getDirectoryHandle('books', {
-      create: true
-    })
-  
-    // get or create book file
-    const bookFileHandle = await booksFolderHandle.getFileHandle(`${hash}.pdf`, {
-      create: true
-    })
-  
-    // save book file
-    const writer = await bookFileHandle.createWritable()
-    await writer.write(await file.arrayBuffer())
-    await writer.close()
-  
-  
-    const bookCapture = await booksFolderHandle.getFileHandle(`${hash}.png`, {
-      create: true
-    })
-  
-    const writer2 = await bookCapture.createWritable()
+    simpleFs.write(`books/${hash}.pdf`, await file.arrayBuffer())
     const { capture, pages } = await getPdfMetaInfo(fileHandle)
-    await writer2.write(capture)
-    await writer2.close()
+    simpleFs.write(`books/${hash}.png`, capture)
   
     if (books[hash]) {
       return hash
@@ -111,25 +92,7 @@
     }
   
     await getFiles(handle)
-    // save books
-    const booksFileHandle = await resourceDir.getFileHandle('books.json', {
-      create: true
-    })
-    const booksFile = await booksFileHandle.createWritable()
-    await booksFile.write(JSON.stringify(books))
-    await booksFile.close()
-  
-  
-    // save events
-    const eventFileHandle = await resourceDir.getFileHandle('events.json', {
-      create: true
-    })
-    const eventFile = await eventFileHandle.createWritable()
-    await eventFile.write(JSON.stringify(events))
-    await eventFile.close()
-  
-    events = events
-  }
+}
   
   let isDrawerOpen = false
   
@@ -158,17 +121,23 @@
         <Content>
           <List>
             <Item on:click={() => { navigate('/') }}>
+              <!-- <Icon class="material-icons">home</Icon> -->
+              <Graphic class="material-icons" aria-hidden="true">home</Graphic>
               <Text>{
                 $t('drawer.home')
               }</Text>
             </Item>
 
             <Item on:click={() => { navigate('/bookmark') }}>
+              <Graphic class="material-icons" aria-hidden="true">bookmark</Graphic>
               <Text>{
                 $t('drawer.bookmark')
                 }</Text>
             </Item>
             <Item on:click={() => { navigate('/new') }}>
+              <Graphic class="material-icons" aria-hidden="true">
+                new_label
+              </Graphic>
               <Text>
                 {
                   $t('drawer.new')
@@ -176,6 +145,9 @@
               </Text>
             </Item>
             <Item on:click={() => { navigate('/reading') }}>
+              <Graphic class="material-icons" aria-hidden="true">
+                book
+              </Graphic>
               <Text>
                 {
                   $t('drawer.reading')
@@ -183,6 +155,9 @@
               </Text>
             </Item>
             <Item on:click={() => { navigate('/done') }}>
+              <Graphic class="material-icons" aria-hidden="true">
+                done
+              </Graphic>
               <Text>
                 {
                   $t('drawer.done')
@@ -190,13 +165,25 @@
               </Text>
             </Item>
             <Item on:click={() => { navigate('/trash') }} >
+              <Graphic class="material-icons" aria-hidden="true">
+                delete
+              </Graphic>
               <Text>
                 {
                   $t('drawer.trash')
                 }
               </Text>
             </Item>
+            <Separator />
+            <Subheader tag="h6">
+              {
+                $t('drawer.subheader')
+              }
+            </Subheader>
             <Item on:click={() => { navigate('/setting') }}>
+              <Graphic class="material-icons" aria-hidden="true">
+                settings
+              </Graphic>
               <Text>
                 {
                   $t('drawer.setting')
@@ -234,14 +221,14 @@
         
         <Router url="{url}">
           <Route path="/" >
-            <Books resourceDir={resourceDir} books={books} mode="all"></Books>
+            <Books simpleFs={simpleFs} books={books} mode="all"></Books>
           </Route>
           <Route path="/setting" >
             setting
           </Route>
 
           <Route path="/:mode" let:params>
-            <Books resourceDir={resourceDir} books={books} mode={params.mode}></Books>
+            <Books simpleFs={simpleFs} books={books} mode={params.mode}></Books>
           </Route>
 
         </Router>

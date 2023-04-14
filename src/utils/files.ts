@@ -35,7 +35,7 @@ export async function getResourceDir (): Promise<FileSystemDirectoryHandle> {
   return handle
 }
 
-async function verifyPermission (fileHandle: FileSystemDirectoryHandle, mode: FileSystemPermissionMode = 'readwrite'): Promise<boolean> {
+export async function verifyPermission (fileHandle: FileSystemDirectoryHandle, mode: FileSystemPermissionMode = 'readwrite'): Promise<boolean> {
   if ((await fileHandle.queryPermission({
     mode
   })) === 'granted') {
