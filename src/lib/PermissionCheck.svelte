@@ -57,8 +57,9 @@
     </Title>
   </Header>
   <Content>
+    <Button on:click={getPermission}>{$t('permission.dialog.button')}</Button>
   </Content>
   <Actions>
-    <Button on:click={getPermission}>{$t('permission.dialog.button')}</Button>
+    
   </Actions>
 </Dialog>
