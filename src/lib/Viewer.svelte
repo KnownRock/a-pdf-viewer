@@ -54,6 +54,35 @@
     event.preventDefault()
   }
 
+  function scaleUp () {
+    const oldScale = scale
+    scale += 0.1
+    scale = Math.min(5, scale)
+    set(`${bookId}-scale`, scale)
+
+    setTimeout(() => {
+      scrollOffset += (e.detail.y - scrollOffset) * (oldScale - scale) / oldScale
+
+      set(`${bookId}-scale`, scale)
+    }, 0)
+  }
+
+  // TODO: crop mode
+
+  // FIXME: scale down jumps to top
+  function scaleDown () {
+    const oldScale = scale
+    scale -= 0.1
+    scale = Math.max(0.1, scale)
+    set(`${bookId}-scale`, scale)
+
+    setTimeout(() => {
+      scrollOffset += (e.detail.y - scrollOffset) * (oldScale - scale) / oldScale
+
+      set(`${bookId}-scale`, scale)
+    }, 0)
+  }
+
   let oldPinchScale: number | null = null
   function handlePinch (e) {
     if (oldPinchScale === null) {
@@ -80,6 +109,16 @@
     e.preventDefault()
   }
 
+  function resetScaleAndOffset () {
+    scale = 1
+    // scrollOffset = 0
+    offsetX = 0
+
+    set(`${bookId}-scale`, scale)
+    set(`${bookId}-offset-x`, offsetX)
+  }
+  
+
 
   $:isLeftMouseDown
     ? (() => {
@@ -95,8 +134,12 @@
     }
   }
 
-  function handleTouchStart () {
+  function handleTouchStart (event: TouchEvent) {
     isLeftMouseDown = true
+
+    oldTouchX = event.touches[0].clientX
+    oldTouchY = event.touches[0].clientY
+
   }
 
   function handleMouseUp (event: MouseEvent) {
@@ -111,11 +154,19 @@
 
   let oldTouchX : number|null = null
   let oldTouchY : number|null = null
-  function handleTouchEnd () {
+  let canFreeMove = false
+  function handleTouchEnd (e: TouchEvent) {
     isLeftMouseDown = false
-
+    canFreeMove = false
+    
+    // if (oldTouchX === e.touches[0].clientX && oldTouchY === e.touches[0].clientY) {
+    //   isNotClick = false
+    // }
+    
     oldTouchX = null
     oldTouchY = null
+
+
   }
 
   let progress = 1
@@ -132,7 +183,7 @@
     }
   }
 
-
+  
   function handleTouchMove (event: TouchEvent) {
     if (isLeftMouseDown) {
       if (oldTouchX === null) {
@@ -142,16 +193,29 @@
         oldTouchY = event.touches[0].clientY
       }
 
+      // console.log(event.touches[0].clientX - oldTouchX)
+      if (
+        !canFreeMove &&
+        Math.abs(event.touches[0].clientX - oldTouchX) < 100) {
+        
+      }else{
+        canFreeMove = true
+        // oldTouchX = oldTouchX - event.touches[0].clientX
+        offsetX += event.touches[0].clientX - oldTouchX
+        throttledSaveOffsetX(offsetX)
+        oldTouchX = event.touches[0].clientX
+      }
 
-      offsetX += event.touches[0].clientX - oldTouchX
+
+      
       scrollOffset -= event.touches[0].clientY - oldTouchY
   
-      oldTouchX = event.touches[0].clientX
+      
       oldTouchY = event.touches[0].clientY
 
       isNotClick = true
 
-      throttledSaveOffsetX(offsetX)
+      
     }
   }
 
@@ -322,6 +386,7 @@
   }
 
   // const scrollToBehaviour = 'auto' as 'smooth' | 'auto'
+  // on:afterScroll use smooth to ignore saveScrollOffset
   let scrollToBehaviour = 'smooth' as 'smooth' | 'auto' | 'instant'
 
 </script>
@@ -366,12 +431,12 @@
         scrollOffset={scrollOffset}
 
         on:afterScroll={async (event) => {
-          console.log('afterScroll', event)
+          // console.log('afterScroll', event)
 
           scrollOffset = event.detail.offset
-          // if (scrollToBehaviour === 'smooth') {
-          //   return
-          // }
+          if (scrollToBehaviour === 'smooth') {
+            return
+          }
 
 
           await saveScrollOffset()
@@ -402,11 +467,14 @@
       {#if isMenuShown}
         <div class="menu top" on:click={e => { e.stopPropagation() }}> 
           <TopAppBar
+            prominent
             variant="static"
             dense
           >
             <Row>
               <Section>
+
+
                 
                 <IconButton class="material-icons" aria-label="Back"
                   on:click={() => {
@@ -421,6 +489,33 @@
               </Section>
               <Section align="end" toolbar>
                 <!-- back -->
+
+                <!-- scaleUp -->
+                <IconButton class="material-icons" aria-label="Scale up"
+                  on:click={() => {
+                    scaleUp()
+                  }}
+                >
+                  zoom_in
+                </IconButton>
+
+                <!-- scaleDown -->
+                <IconButton class="material-icons" aria-label="Scale down"
+                  on:click={() => {
+                    scaleDown()
+                  }}
+                >
+                  zoom_out
+                </IconButton>
+
+                <!-- reset -->
+                <IconButton class="material-icons" aria-label="Reset"
+                  on:click={() => {
+                    resetScaleAndOffset()
+                  }}
+                >
+                  settings_backup_restore
+                </IconButton>
                 
 
                 <IconButton class="material-icons" aria-label="Download"
@@ -470,8 +565,14 @@
                 max={pdf.numPages}
               />
             </div>
-
-            <span>{progress}/{pdf.numPages}</span>
+            <div
+              style="display: flex; align-items: center; justify-content: center; width: 10%;"
+            >
+              <span
+                style="margin: auto;"
+              >{progress}/{pdf.numPages}</span>
+            </div>
+            
           </div>
         </div>
       {/if}
@@ -519,14 +620,14 @@
     right: 0;
     background-color: #fff;
     
-    
+    height: 50px;
     
   }
 
   .bottom {
     bottom: 0;
     border-radius: 10px 10px 0 0 ;
-    padding: 10px;
+    padding: 0 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
   }
 
@@ -538,8 +639,8 @@
   .menu-item {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
+    /* align-items: center; */
+    margin-bottom: 50px;
   }
 
 </style>
