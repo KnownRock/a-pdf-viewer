@@ -72,6 +72,9 @@
   function stopPropagation (e: Event) {
     e.stopPropagation()
   }
+
+  // TODO: two page mode 
+  // TODO: cache unzoomed page to scale and replace canvas when render ready
 </script>
 
 <div class="page">
@@ -98,7 +101,9 @@
 <style>
   .page {
     height: 100%;
-    width: 100%;
+    /* width: 100%; */
+    width: 100vw;
+    overflow: hidden;
 
     display: flex;
     align-items: center;
