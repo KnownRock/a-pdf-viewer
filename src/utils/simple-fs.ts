@@ -31,7 +31,8 @@ async function getIdb (): Promise<SimpleFs> {
           return new TextDecoder().decode(data)
         }
 
-        throw new Error('Invalid data type')
+        // throw new Error('Invalid data type')
+        return undefined
       }
       if (mode === 'arrayBuffer') {
         if (data instanceof ArrayBuffer) {
@@ -41,7 +42,12 @@ async function getIdb (): Promise<SimpleFs> {
           return new TextEncoder().encode(data)
         }
 
-        throw new Error('Invalid data type')
+        if (data instanceof Uint8Array) {
+          return data.buffer
+        }
+
+        // throw new Error('Invalid data type')
+        return undefined
       }
 
       throw new Error('Invalid mode')
@@ -69,29 +75,37 @@ async function getIdb (): Promise<SimpleFs> {
 async function getFsApi (): Promise<SimpleFs> {
   const fsApi = new class FsApi implements SimpleFs {
     private resourceDir: FileSystemDirectoryHandle | null = null
-    async init (): Promise<void> {
+    private async initInner (): Promise<void> {
       const handle = await get<FileSystemDirectoryHandle>('app:resourceDir')
       if (handle != null) {
         const result = await verifyPermission(handle)
         if (result) {
+          this.resourceDir = handle
           return
         }
       }
       this.resourceDir = await getResourceDir()
-      debugger
       await set('app:resourceDir', this.resourceDir)
     }
 
-    async write (path: string, data: string | ArrayBuffer): Promise<void> {
+    async init (): Promise<void> {
+      console.log('init fsApi')
+    }
+
+    private async checkResourceDir (): Promise<FileSystemDirectoryHandle> {
+      let count = 10
       while (this.resourceDir == null) {
-        await this.init()
+        await this.initInner()
+        if (count-- < 0) {
+          throw new Error('Failed to get resource directory')
+        }
       }
 
-      // private async function checkResourceDir (){
-      //   while (this.resourceDir == null) {
-      //     await this.init()
-      //   }
-      // }
+      return this.resourceDir
+    }
+
+    async write (path: string, data: string | ArrayBuffer): Promise<void> {
+      const resourceDir = await this.checkResourceDir()
 
       const paths = path.split('/')
       async function createDir (dir: FileSystemDirectoryHandle, paths: string[]): Promise<FileSystemDirectoryHandle> {
@@ -102,7 +116,7 @@ async function getFsApi (): Promise<SimpleFs> {
         return await dir.getDirectoryHandle(p, { create: true }).then(async (dir) => await createDir(dir, paths))
       }
 
-      const dir = await createDir(this.resourceDir, paths.slice(0, paths.length - 1))
+      const dir = await createDir(resourceDir, paths.slice(0, paths.length - 1))
 
       const file = await dir.getFileHandle(paths[paths.length - 1], { create: true })
       const writer = await file.createWritable()
@@ -111,9 +125,7 @@ async function getFsApi (): Promise<SimpleFs> {
     }
 
     async read (path: string, mode: ReadMode): Promise<ReadModeResult[ReadMode]> {
-      while (this.resourceDir == null) {
-        await this.init()
-      }
+      const resourceDir = await this.checkResourceDir()
 
       const paths = path.split('/')
       async function getDir (dir: FileSystemDirectoryHandle, paths: string[]): Promise<FileSystemDirectoryHandle> {
@@ -124,7 +136,7 @@ async function getFsApi (): Promise<SimpleFs> {
         return await dir.getDirectoryHandle(p).then(async (dir) => await getDir(dir, paths))
       }
 
-      const dir = await getDir(this.resourceDir, paths.slice(0, paths.length - 1))
+      const dir = await getDir(resourceDir, paths.slice(0, paths.length - 1))
 
       const file = await dir.getFileHandle(paths[paths.length - 1])
       const fileHandle = await file.getFile()
@@ -139,9 +151,7 @@ async function getFsApi (): Promise<SimpleFs> {
     }
 
     async delete (path: string): Promise<void> {
-      while (this.resourceDir == null) {
-        await this.init()
-      }
+      const resourceDir = await this.checkResourceDir()
 
       const paths = path.split('/')
       async function getDir (dir: FileSystemDirectoryHandle, paths: string[]): Promise<FileSystemDirectoryHandle> {
@@ -152,15 +162,13 @@ async function getFsApi (): Promise<SimpleFs> {
         return await dir.getDirectoryHandle(p).then(async (dir) => await getDir(dir, paths))
       }
 
-      const dir = await getDir(this.resourceDir, paths.slice(0, paths.length - 1))
+      const dir = await getDir(resourceDir, paths.slice(0, paths.length - 1))
 
       await dir.removeEntry(paths[paths.length - 1])
     }
 
     async exists (path: string): Promise<boolean> {
-      while (this.resourceDir == null) {
-        await this.init()
-      }
+      const resourceDir = await this.checkResourceDir()
 
       const paths = path.split('/')
       async function getDir (dir: FileSystemDirectoryHandle, paths: string[]): Promise<FileSystemDirectoryHandle> {
@@ -171,15 +179,13 @@ async function getFsApi (): Promise<SimpleFs> {
         return await dir.getDirectoryHandle(p).then(async (dir) => await getDir(dir, paths))
       }
 
-      const dir = await getDir(this.resourceDir, paths.slice(0, paths.length - 1))
+      const dir = await getDir(resourceDir, paths.slice(0, paths.length - 1))
 
       return await dir.getFileHandle(paths[paths.length - 1]).then(() => true).catch(() => false)
     }
 
     async list (path: string): Promise<string[]> {
-      while (this.resourceDir == null) {
-        await this.init()
-      }
+      const resourceDir = await this.checkResourceDir()
 
       const paths = path.split('/')
       async function getDir (dir: FileSystemDirectoryHandle, paths: string[]): Promise<FileSystemDirectoryHandle> {
@@ -190,7 +196,7 @@ async function getFsApi (): Promise<SimpleFs> {
         return await dir.getDirectoryHandle(p).then(async (dir) => await getDir(dir, paths))
       }
 
-      const dir = await getDir(this.resourceDir, paths.slice(0, paths.length - 1))
+      const dir = await getDir(resourceDir, paths.slice(0, paths.length - 1))
 
       const entries = dir.values()
       const result: string[] = []

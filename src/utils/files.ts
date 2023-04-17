@@ -1,4 +1,4 @@
-import { permission, resource } from '../store'
+import { fsApiRequest, permission, resource } from '../store'
 import { get, set } from 'idb-keyval'
 let isRequesting = false
 const resquests: Array<[(handle: FileSystemDirectoryHandle) => void, (err: Error) => void]> = []
@@ -41,11 +41,29 @@ export async function verifyPermission (fileHandle: FileSystemDirectoryHandle, m
   })) === 'granted') {
     return true
   }
-  if ((await fileHandle.requestPermission({
-    mode
-  })) === 'granted') {
-    return true
-  }
+
+  let resolver: () => void = () => {}
+  let rejecter: (err: Error) => void = (err: Error) => { throw err }
+  const promise = new Promise<void>((resolve, reject) => {
+    resolver = resolve
+    rejecter = reject
+  })
+
+  fsApiRequest.set({
+    isShow: true,
+    callback: async () => {
+      if ((await fileHandle.requestPermission({
+        mode
+      })) === 'granted') {
+        resolver()
+      } else {
+        rejecter(new Error('User denied permission'))
+      }
+    }
+  })
+
+  await promise
+
   return false
 }
 

@@ -40,6 +40,8 @@
       startIn: 'documents'
     })
     callback(handle)
+
+    open = false
   }
 
 </script>

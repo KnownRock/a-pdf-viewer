@@ -6,12 +6,7 @@
 
   import { simpleFs as simpleFsStore } from './store'
   import Viewer from './lib/Viewer.svelte'
-  import type { SimpleFs } from './types'
-
-  // let resourceDir: FileSystemDirectoryHandle | null = null
-  // resource.subscribe((value) => {
-  //   resourceDir = value.resourceDir
-  // })
+  import { SimpleFsName, type SimpleFs } from './types'
 
   let simpleFs: SimpleFs | null = null
   simpleFsStore.subscribe((value) => {
@@ -20,6 +15,21 @@
 
 
   import { Router, Route } from 'svelte-routing'
+  import { onMount } from 'svelte'
+  import { getSimpleFs } from './utils/simple-fs'
+  // import { getSimpleFsName } from './utils/config'
+
+  onMount(() => {
+    async function main () {
+      // const simpleFsName = await getSimpleFsName() ?? SimpleFsName.idb
+      // TODO: finish fs api mode
+      const simpleFsName = SimpleFsName.idb
+      const simpleFs = await getSimpleFs(simpleFsName)
+      simpleFsStore.set({ simpleFs })
+    }
+
+    main()
+  })
   
 
   const url = ''
@@ -31,20 +41,18 @@
   <Loading />
   <PermissionCheck />
 
-  {#if simpleFs}
-    <Router url="{url}">
-      <Route path="/book/:id" let:params >
-        <Viewer simpleFs={simpleFs} bookId={params.id} />
-      </Route>
 
-      <Route path="/*" >
-        <BookShelf simpleFs={simpleFs}  />
-      </Route>
-    </Router>
+  <Router url="{url}">
+    <Route path="/book/:id" let:params >
+      <Viewer simpleFs={simpleFs} bookId={params.id} />
+    </Route>
 
-  {:else}
-    <div>no resourceDir</div>
-  {/if}
+    <Route path="/*" >
+      <BookShelf simpleFs={simpleFs}  />
+    </Route>
+  </Router>
+
+
 
   
 {/if}

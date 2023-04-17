@@ -2,14 +2,26 @@
   import Button from '@smui/button'
   import Dialog, { Actions, Content, Header, Title } from '@smui/dialog'
   // import { initResourceDir } from '../utils/files'
-  import { getSimpleFs } from '../utils/simple-fs'
 
   import { t } from 'svelte-i18n'
-  import { SimpleFsName } from '../types'
-  import { simpleFs as simpleFsStore } from '../store'
-  let open = true
+  import { fsApiRequest } from '../store'
+  import { navigate } from 'svelte-routing'
+  
+  let open = false
+  let callback: (() => void) | null = null
+  fsApiRequest.subscribe(async (value) => {
+    open = value.isShow
+    callback = value.callback
+  })
+
 
   function closeHandler () {
+    navigate('/setting')
+
+    if (callback) {
+      callback()
+    }
+
     open = false
   }
 
@@ -31,8 +43,12 @@
   </Content>
   <Actions>
     <Button on:click={async () => {
-      const simpleFs = await getSimpleFs(SimpleFsName.fsapi)
-      simpleFsStore.set({ simpleFs })
+      // const simpleFs = await getSimpleFs(SimpleFsName.idb)
+      // simpleFsStore.set({ simpleFs })
+
+      if (callback) {
+        callback()
+      }
     }}>{$t('loading.dialog.button')}</Button>
     <!-- <Button action="close">{$t('loading.dialog.close')}</Button> -->
   </Actions>

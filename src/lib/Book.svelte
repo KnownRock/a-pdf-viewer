@@ -19,22 +19,13 @@
   let bookTitle = book.title
 
   onMount(async () => {
-    // const booksFolderHandle = await resourceDir.getDirectoryHandle('books', {
-    //   create: true
-    // })
-    // const coverFileHandle = await booksFolderHandle.getFileHandle(`${book.id}.png`, {
-    //   create: true
-    // })
-    // const coverFile = await coverFileHandle.getFile()
-    // const coverBlob = await coverFile.slice(0, coverFile.size, 'image/png')
-    // const coverUrl = URL.createObjectURL(coverBlob)
-    // cover = coverUrl
-
     const result = await simpleFs.read(`books/${book.id}.png`, 'arrayBuffer')
     if (result) {
       const coverBlob = new Blob([result], { type: 'image/png' })
       const coverUrl = URL.createObjectURL(coverBlob)
       cover = coverUrl
+    } else {
+      cover = bookPng
     }
 })
 
@@ -104,7 +95,7 @@
       <div style="width:220px; height:300px; display:flex; justify-content:center;  ">
         <img 
           style="width:100%; height:100%; object-fit:contain; "
-          src={cover || bookPng} alt={book.title} />
+          src={cover} alt={book.title} />
       </div>
     </Paper>
 

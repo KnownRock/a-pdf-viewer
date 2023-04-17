@@ -1,6 +1,6 @@
 import { writable, get } from 'svelte/store'
-import type { Book, Event } from '../types'
-import rescourceStore from './resource'
+import type { Book, Event, SimpleFs } from '../types'
+import { simpleFs as simpleFsStore } from '.'
 
 const store = writable<{
   books: Record<Book['id'], Book>
@@ -12,47 +12,31 @@ const store = writable<{
   isInitiated: false
 })
 
-async function getFileContentWithDefault (
-  resourceDir: FileSystemDirectoryHandle, fileName: string, defaultContent: string
-): Promise<string> {
-  const fileHandle = await resourceDir.getFileHandle(fileName, {
-    create: true
-  })
-  const file = await fileHandle.getFile()
-  const fileJson = await file.text()
-  if (fileJson !== '') {
-    return fileJson
-  } else {
-    await (await fileHandle.createWritable()).write(defaultContent)
-    return defaultContent
-  }
+async function saveObjectToFile (simpleFs: SimpleFs, fileName: string, obj: any): Promise<void> {
+  await simpleFs.write(fileName, JSON.stringify(obj))
+}
+async function getBooksBySimpleFs (simpleFs: SimpleFs): Promise<Record<Book['id'], Book>> {
+  const bookJson = await simpleFs.read('books.json', 'text')
+  return bookJson !== undefined
+    ? JSON.parse(bookJson as string)
+    : {}
 }
 
-async function saveObjectToFile (resourceDir: FileSystemDirectoryHandle, fileName: string, obj: any): Promise<void> {
-  const fileHandle = await resourceDir.getFileHandle(fileName, {
-    create: true
-  })
-  const writable = await fileHandle.createWritable()
-  await writable.write(JSON.stringify(obj))
-  await writable.close()
+async function getEventsBySimpleFs (simpleFs: SimpleFs): Promise<Event[]> {
+  const eventsJson = await simpleFs.read('events.json', 'text')
+  return eventsJson === undefined
+    ? []
+    : JSON.parse(eventsJson as string)
 }
 
-async function getBookFromResourceDir (resourceDir: FileSystemDirectoryHandle): Promise<Record<Book['id'], Book>> {
-  const booksJson = await getFileContentWithDefault(resourceDir, 'books.json', '{}')
-  return JSON.parse(booksJson)
-}
-
-async function getEventsFromResourceDir (resourceDir: FileSystemDirectoryHandle): Promise<Event[]> {
-  const eventsJson = await getFileContentWithDefault(resourceDir, 'events.json', '[]')
-  return JSON.parse(eventsJson)
-}
 let task: Promise<void> | null = null
-rescourceStore.subscribe((resource) => {
+
+simpleFsStore.subscribe((simpleFsStore) => {
   task = (async () => {
-    if (resource.resourceDir != null) {
-      const resourceDir = resource.resourceDir
-      const books = await getBookFromResourceDir(resourceDir)
-      const events = await getEventsFromResourceDir(resourceDir)
+    if (simpleFsStore?.simpleFs !== null) {
+      const simpleFs = simpleFsStore.simpleFs
+      const books = await getBooksBySimpleFs(simpleFs)
+      const events = await getEventsBySimpleFs(simpleFs)
       store.set({
         books,
         events,
@@ -78,8 +62,10 @@ async function saveState (): Promise<void> {
   if (task != null) {
     await task
   }
-  const resourceDir = get(rescourceStore).resourceDir
-  if (resourceDir == null) {
+
+  const simpleFs = get(simpleFsStore).simpleFs
+  if (simpleFs == null) {
+    console.error('simpleFs is null')
     return
   }
 
@@ -102,8 +88,8 @@ async function saveState (): Promise<void> {
     return state
   })
 
-  await saveObjectToFile(resourceDir, 'books.json', get(store).books)
-  await saveObjectToFile(resourceDir, 'events.json', newEvents)
+  await saveObjectToFile(simpleFs, 'books.json', get(store).books)
+  await saveObjectToFile(simpleFs, 'events.json', newEvents)
 }
 
 export async function updateBookProgress (id: Book['id'], progress: Book['progress']): Promise<void> {

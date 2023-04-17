@@ -24,42 +24,46 @@
 
 
   let renderTask: pdfjsLib.RenderTask | null = null
-  const render = async (pageIndex:number) => {
+  const render = async (pageIndex:number, withReRender = true) => {
     if (!canvas) return
-    const context = canvas.getContext('2d')
+  
     const page = await pdf.getPage(pageIndex)
     const viewport = page.getViewport({ scale })
-    canvas.width = Math.floor(viewport.width * outputScale)
-    canvas.height = Math.floor(viewport.height * outputScale)
+  
     canvas.style.width = Math.floor(viewport.width) + 'px'
     canvas.style.height = Math.floor(viewport.height) + 'px'
 
     height = viewport.height
 
-    renderContext = {
-      canvasContext: context as CanvasRenderingContext2D,
-      transform,
-      viewport
-    }
-
-    if (renderTask) {
-      try {
-        renderTask.cancel()
-      } catch (error) {
-  
+    if (withReRender) {
+      canvas.width = Math.floor(viewport.width * outputScale)
+      canvas.height = Math.floor(viewport.height * outputScale)
+      const context = canvas.getContext('2d')
+      renderContext = {
+        canvasContext: context as CanvasRenderingContext2D,
+        transform,
+        viewport
       }
-    }
 
-    try {
-      renderTask = page.render(renderContext)
-      await renderTask.promise
-    } catch (error) {
-      console.log(error)
+      if (renderTask) {
+        try {
+          renderTask.cancel()
+        } catch (error) {
+  
+        }
+      }
+
+      try {
+        renderTask = page.render(renderContext)
+        await renderTask.promise
+      } catch (error) {
+        console.log(error)
+      }
     }
   }
 
 
-  $: pageIndex && scale && render(pageIndex)
+  $: pageIndex && scale && render(pageIndex, false)
 
   onMount(() => {
     render(pageIndex)
