@@ -7,16 +7,18 @@
   import type { PDFDocumentProxy } from 'pdfjs-dist'
   import { updateBookProgress, updateBookState } from '../store/state'
   import Slider from '@smui/slider'
-  export let bookId: string | null = null
-  let book: Book | null = null
+  
   import VirtualList from 'svelte-tiny-virtual-list'
   import * as pdfjsLib from 'pdfjs-dist'
   import TopAppBar, { Row, Section, Title } from '@smui/top-app-bar'
   import IconButton from '@smui/icon-button'
   pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf/pdf.worker.js'
   import { navigate } from 'svelte-routing'
-  export let simpleFs: SimpleFs
-  
+  import { pinch } from 'svelte-gestures'
+
+  export let simpleFs: SimpleFs | null
+  export let bookId: string | null = null
+  let book: Book | null = null
   
   state.subscribe((value) => {
     if (bookId) {
@@ -50,7 +52,33 @@
     }, 0)
 
     event.preventDefault()
-}
+  }
+
+  let oldPinchScale: number | null = null
+  function handlePinch (e) {
+    if (oldPinchScale === null) {
+      oldPinchScale = e.detail.scale
+    }
+
+    console.log(e.detail)
+    const oldScale = scale
+    if (oldPinchScale !== null) {
+      scale -= (e.detail.scale - oldPinchScale) / 20
+    }
+  
+    scale = Math.max(0.1, scale)
+    scale = Math.min(5, scale)
+
+    scrollToBehaviour = 'instant'
+
+    setTimeout(() => {
+      scrollOffset += (e.detail.y - scrollOffset) * (oldScale - scale) / oldScale
+
+      set(`${bookId}-scale`, scale)
+    }, 0)
+
+    e.preventDefault()
+  }
 
 
   $:isLeftMouseDown
@@ -259,6 +287,10 @@
     // const file = await fileHandle.getFile()
     // const buffer = await file.arrayBuffer()
 
+    if (simpleFs === null) {
+      throw new Error('simpleFs is null')
+    }
+
     const result = await simpleFs.read(`books/${bookId}.pdf`, 'arrayBuffer')
     if (!result) {
       throw new Error('book not found')
@@ -306,6 +338,10 @@
   on:touchmove={handleTouchMove}
   on:mouseleave={handleMouseLeave}
   on:click={handleClick}
+
+  use:pinch
+  on:pinch="{handlePinch}"
+  
 
   bind:clientHeight={height}
 >

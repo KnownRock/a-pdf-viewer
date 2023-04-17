@@ -14,7 +14,10 @@
     "allowJs": true,
     "checkJs": true,
     "isolatedModules": true,
-    "strictNullChecks": true
+    "strictNullChecks": true,
+
+    "types": ["svelte-gesture/globals"]
+
   },
   "include": ["src/**/*.d.ts", "src/**/*.ts", "src/**/*.js", "src/**/*.svelte", "sw.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
