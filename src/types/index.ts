@@ -50,7 +50,7 @@ export interface SimpleFs {
   // }
   delete: (path: string) => Promise<void>
   exists: (path: string) => Promise<boolean>
-  list: (path: string) => Promise<string[]>
+  // list: (path: string) => Promise<string[]>
 
   init: (
     ...args: any[]
