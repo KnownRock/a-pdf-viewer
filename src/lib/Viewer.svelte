@@ -19,6 +19,29 @@
   export let simpleFs: SimpleFs | null
   export let bookId: string | null = null
   let book: Book | null = null
+  let scrollToBehaviour = 'instant' as 'smooth' | 'auto' | 'instant'
+  let pdf: PDFDocumentProxy | null = null
+  let pdfPageHeight: number = 0
+  // TODO: fix first page slow render issue
+  let inited = false
+
+  async function saveScrollOffset () {
+    if (bookId) {
+      const pageIndex = Math.floor(scrollOffset / pdfPageHeight) + 1
+      if (pageIndex !== progress) {
+        progress = pageIndex
+        console.log('update progress', pageIndex)
+        updateBookProgress(bookId, pageIndex)
+      }
+
+      await set(`${bookId}-offset-y`, scrollOffset - (pageIndex - 1) * pdfPageHeight)
+    }
+  }
+
+  async function handleScrollByUser () {
+    await saveScrollOffset()
+  }
+
   
   state.subscribe((value) => {
     if (bookId) {
@@ -34,97 +57,72 @@
   let isNotClick = false
   function handleWheel (event: WheelEvent) {
     if (!(event.ctrlKey || event.metaKey || isLeftMouseDown)) {
+      // FIXME: this is a hack
+      setTimeout(() => {
+        handleScrollByUser()
+      }, 500)
       return
     }
-
-    const oldScale = scale
-
-    scale -= event.deltaY / 1000
-    scale = Math.max(0.1, scale)
-    scale = Math.min(5, scale)
-
-    scrollToBehaviour = 'instant'
-
-    setTimeout(() => {
-      scrollOffset += (event.clientY - scrollOffset) * (oldScale - scale) / oldScale
-
-      set(`${bookId}-scale`, scale)
-    }, 0)
+  
+    const newScale = scale - event.deltaY / 1000
+    changeScale(scale, newScale, event.clientY)
 
     event.preventDefault()
   }
 
-  function scaleUp () {
-    const oldScale = scale
-    scale += 0.1
-    scale = Math.min(5, scale)
-    set(`${bookId}-scale`, scale)
+  function changeScale (oldScale, newScale, clientY) {
+    scrollToBehaviour = 'instant'
+
+    newScale = Math.max(0.1, newScale)
+    newScale = Math.min(5, newScale)
+
+    scale = newScale
+
+    console.log(scrollOffset, oldScale, clientY, scale)
+    const unScaleLocation = scrollOffset / oldScale + clientY / oldScale
+    scrollOffset = Math.max(unScaleLocation * scale - clientY, 0)
 
     setTimeout(() => {
-      scrollOffset += (e.detail.y - scrollOffset) * (oldScale - scale) / oldScale
+      scrollToBehaviour = 'smooth'
+    }, 100)
+  
+  
+    set(`${bookId}-scale`, scale)
+  }
 
-      set(`${bookId}-scale`, scale)
-    }, 0)
+
+  function scaleUp () {
+    const newScale = scale + 0.1
+    changeScale(scale, newScale, 0)
   }
 
   // TODO: crop mode
-
-  // FIXME: scale down jumps to top
   function scaleDown () {
-    const oldScale = scale
-    scale -= 0.1
-    scale = Math.max(0.1, scale)
-    set(`${bookId}-scale`, scale)
-
-    setTimeout(() => {
-      scrollOffset += (e.detail.y - scrollOffset) * (oldScale - scale) / oldScale
-
-      set(`${bookId}-scale`, scale)
-    }, 0)
+    const newScale = scale - 0.1
+    changeScale(scale, newScale, 0)
   }
 
-  let oldPinchScale: number | null = null
+
+  // TODO: implement this
   function handlePinch (e) {
-    if (oldPinchScale === null) {
-      oldPinchScale = e.detail.scale
-    }
-
-    console.log(e.detail)
-    const oldScale = scale
-    if (oldPinchScale !== null) {
-      scale -= (e.detail.scale - oldPinchScale) / 20
-    }
-  
-    scale = Math.max(0.1, scale)
-    scale = Math.min(5, scale)
-
-    scrollToBehaviour = 'instant'
-
-    setTimeout(() => {
-      scrollOffset += (e.detail.y - scrollOffset) * (oldScale - scale) / oldScale
-
-      set(`${bookId}-scale`, scale)
-    }, 0)
-
     e.preventDefault()
   }
 
   function resetScaleAndOffset () {
     scale = 1
-    // scrollOffset = 0
     offsetX = 0
-
     set(`${bookId}-scale`, scale)
     set(`${bookId}-offset-x`, offsetX)
   }
   
 
-
   $:isLeftMouseDown
     ? (() => {
+        console.log('instant')
         scrollToBehaviour = 'instant'
       })()
     : (() => {
+        console.log('smooth')
         scrollToBehaviour = 'smooth'
       })()
 
@@ -134,12 +132,16 @@
     }
   }
 
+  let touchStartY: number | null = null
+  let touchStartX: number | null = null
   function handleTouchStart (event: TouchEvent) {
     isLeftMouseDown = true
 
     oldTouchX = event.touches[0].clientX
     oldTouchY = event.touches[0].clientY
 
+    touchStartY = event.touches[0].clientY
+    touchStartX = event.touches[0].clientX
   }
 
   function handleMouseUp (event: MouseEvent) {
@@ -148,9 +150,12 @@
 
       setTimeout(() => {
         isNotClick = false
+
+        handleScrollByUser()
       }, 10)
     }
   }
+
 
   let oldTouchX : number|null = null
   let oldTouchY : number|null = null
@@ -158,15 +163,15 @@
   function handleTouchEnd (e: TouchEvent) {
     isLeftMouseDown = false
     canFreeMove = false
-    
-    // if (oldTouchX === e.touches[0].clientX && oldTouchY === e.touches[0].clientY) {
-    //   isNotClick = false
-    // }
-    
+
+    if (touchStartX !== null && touchStartY !== null) {
+      if (Math.abs(e.changedTouches[0].clientX - touchStartX) < 10 && Math.abs(e.changedTouches[0].clientY - touchStartY) < 10) {
+        isNotClick = false
+      }
+    }
+  
     oldTouchX = null
     oldTouchY = null
-
-
   }
 
   let progress = 1
@@ -197,8 +202,8 @@
       if (
         !canFreeMove &&
         Math.abs(event.touches[0].clientX - oldTouchX) < 100) {
-        
-      }else{
+        console.log('not free move')
+      } else {
         canFreeMove = true
         // oldTouchX = oldTouchX - event.touches[0].clientX
         offsetX += event.touches[0].clientX - oldTouchX
@@ -206,16 +211,13 @@
         oldTouchX = event.touches[0].clientX
       }
 
-
-      
+  
       scrollOffset -= event.touches[0].clientY - oldTouchY
   
-      
+  
       oldTouchY = event.touches[0].clientY
 
       isNotClick = true
-
-      
     }
   }
 
@@ -239,8 +241,6 @@
     isLeftMouseDown = false
   }
 
-  let pdf: PDFDocumentProxy | null = null
-  let pdfPageHeight: number = 500
 
   let isLoaded = false
   async function load () {
@@ -263,15 +263,6 @@
     }
 
     const buffer = result as ArrayBuffer
-
-    // const booksFolderHandle = await resourceDir.getDirectoryHandle('books', {
-    //   create: true
-    // })
-    // const bookFileHandle = await booksFolderHandle.getFileHandle(`${bookId}.pdf`, {
-    //   create: true
-    // })
-    // const file = await bookFileHandle.getFile()
-    // const buffer = await file.arrayBuffer()
     const p = await pdfjsLib.getDocument(buffer).promise
     const page = await p.getPage(1)
 
@@ -288,6 +279,8 @@
     scrollOffset = (bookProgress - 1) * pdfPageHeight + await get(`${bookId}-offset-y`) ?? 0
 
     pdf = p
+
+    inited = true
   }
 
   $: bookId && load()
@@ -301,18 +294,6 @@
     isMenuShown = !isMenuShown
   }
 
-  async function saveScrollOffset () {
-    if (bookId) {
-      const pageIndex = Math.floor(scrollOffset / pdfPageHeight) + 1
-      if (pageIndex !== progress) {
-        progress = pageIndex
-        console.log('update progress', pageIndex)
-        updateBookProgress(bookId, pageIndex)
-      }
-
-      await set(`${bookId}-offset-y`, scrollOffset - (pageIndex - 1) * pdfPageHeight)
-    }
-  }
 
   // $: progress && (async () => {
   //   scrollOffset = (progress - 1) * pdfPageHeight +
@@ -387,8 +368,7 @@
 
   // const scrollToBehaviour = 'auto' as 'smooth' | 'auto'
   // on:afterScroll use smooth to ignore saveScrollOffset
-  let scrollToBehaviour = 'smooth' as 'smooth' | 'auto' | 'instant'
-
+  
 </script>
 
 {#if book}
@@ -416,53 +396,44 @@
   {:else}
     <div >
       
+      {#if inited}
 
-      <VirtualList
-        height={height}
-        width="auto"
-        itemCount={pdf.numPages}
-        itemSize={pdfPageHeight}
-        
-        getKey={index => index}
-        scrollToBehaviour={scrollToBehaviour}
-        
-        scrollToIndex={Math.floor(scrollOffset / pdfPageHeight)}
+        <VirtualList
+          height={height}
+          width="auto"
+          itemCount={pdf.numPages}
+          itemSize={pdfPageHeight}
+          
+          getKey={index => index}
+          scrollToBehaviour={scrollToBehaviour}
+          scrollOffset={scrollOffset}
 
-        scrollOffset={scrollOffset}
+          on:afterScroll={async (event) => {
+            scrollOffset = event.detail.offset
+          }}
+        >
+          <div slot="item" let:index let:style {style} class="page">
+            <Page 
+              on:prev={() => {
+                console.log('prev', index)
+                console.log('prev', scrollOffset)
 
-        on:afterScroll={async (event) => {
-          // console.log('afterScroll', event)
+                scrollOffset -= pdfPageHeight
+                saveScrollOffset()
+              }}
+              on:next={() => {
+                console.log('next', index)
+                console.log('next', scrollOffset)
 
-          scrollOffset = event.detail.offset
-          if (scrollToBehaviour === 'smooth') {
-            return
-          }
-
-
-          await saveScrollOffset()
-        }}
-      >
-        <div slot="item" let:index let:style {style} class="page">
-          <Page 
-            on:prev={() => {
-              console.log('prev', index)
-              console.log('prev', scrollOffset)
-
-              scrollOffset -= pdfPageHeight
-              saveScrollOffset()
-            }}
-            on:next={() => {
-              console.log('next', index)
-              console.log('next', scrollOffset)
-
-              scrollOffset += pdfPageHeight
-              saveScrollOffset()
-            }}
-            {offsetX}
-            {scale} {pdf} pageIndex={index + 1} bind:height={pdfPageHeight} />
-        </div>
-        
-      </VirtualList>
+                scrollOffset += pdfPageHeight
+                saveScrollOffset()
+              }}
+              {offsetX}
+              {scale} {pdf} pageIndex={index + 1} bind:height={pdfPageHeight} />
+          </div>
+          
+        </VirtualList>
+      {/if}
 
       {#if isMenuShown}
         <div class="menu top" on:click={e => { e.stopPropagation() }}> 
