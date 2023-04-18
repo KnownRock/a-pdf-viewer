@@ -280,19 +280,10 @@
 
     pdf = p
 
-<<<<<<< HEAD
-<<<<<<< Updated upstream
-    inited = true
-=======
+
     setTimeout(() => {
       inited = true
     }, 300)
->>>>>>> Stashed changes
-=======
-    setTimeout(() => {
-      inited = true
-    }, 1000)
->>>>>>> origin/feature-improve-loading
   }
 
   $: bookId && load()
