@@ -116,7 +116,7 @@
   }
   
 
-  $:isLeftMouseDown
+  $:isLeftMouseDown || !inited
     ? (() => {
         console.log('instant')
         scrollToBehaviour = 'instant'
@@ -280,7 +280,13 @@
 
     pdf = p
 
+<<<<<<< Updated upstream
     inited = true
+=======
+    setTimeout(() => {
+      inited = true
+    }, 300)
+>>>>>>> Stashed changes
   }
 
   $: bookId && load()

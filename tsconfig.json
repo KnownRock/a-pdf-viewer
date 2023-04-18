@@ -16,7 +16,10 @@
     "isolatedModules": true,
     "strictNullChecks": true,
 
-    "types": ["svelte-gesture/globals"]
+    "types": [
+      "svelte-gesture/globals",
+      "aws-sdk"
+    ]
 
   },
   "include": ["src/**/*.d.ts", "src/**/*.ts", "src/**/*.js", "src/**/*.svelte", "sw.ts"],
