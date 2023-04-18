@@ -58,12 +58,12 @@ async function getIdb (): Promise<SimpleFs> {
     async exists (path: string) {
       return await keys().then((keys) => keys.includes(idbFsPrefix + path))
     },
-    async list (path: string) {
-      return (await keys().then((keys) => keys.filter(
-        (key) => key.toLocaleString().startsWith(idbFsPrefix + path)
-      )) as string[])
-      // FIXME: why need to cast to string[]?
-    },
+    // async list (path: string) {
+    //   return (await keys().then((keys) => keys.filter(
+    //     (key) => key.toLocaleString().startsWith(idbFsPrefix + path)
+    //   )) as string[])
+    //   // FIXME: why need to cast to string[]?
+    // },
     async init () {
       // do nothing
     }
@@ -184,27 +184,27 @@ async function getFsApi (): Promise<SimpleFs> {
       return await dir.getFileHandle(paths[paths.length - 1]).then(() => true).catch(() => false)
     }
 
-    async list (path: string): Promise<string[]> {
-      const resourceDir = await this.checkResourceDir()
+    // async list (path: string): Promise<string[]> {
+    //   const resourceDir = await this.checkResourceDir()
 
-      const paths = path.split('/')
-      async function getDir (dir: FileSystemDirectoryHandle, paths: string[]): Promise<FileSystemDirectoryHandle> {
-        if (paths.length === 0) {
-          return await Promise.resolve(dir)
-        }
-        const p = paths.shift() as string
-        return await dir.getDirectoryHandle(p).then(async (dir) => await getDir(dir, paths))
-      }
+    //   const paths = path.split('/')
+    //   async function getDir (dir: FileSystemDirectoryHandle, paths: string[]): Promise<FileSystemDirectoryHandle> {
+    //     if (paths.length === 0) {
+    //       return await Promise.resolve(dir)
+    //     }
+    //     const p = paths.shift() as string
+    //     return await dir.getDirectoryHandle(p).then(async (dir) => await getDir(dir, paths))
+    //   }
 
-      const dir = await getDir(resourceDir, paths.slice(0, paths.length - 1))
+    //   const dir = await getDir(resourceDir, paths.slice(0, paths.length - 1))
 
-      const entries = dir.values()
-      const result: string[] = []
-      for await (const entry of entries) {
-        result.push(entry.name)
-      }
-      return result
-    }
+    //   const entries = dir.values()
+    //   const result: string[] = []
+    //   for await (const entry of entries) {
+    //     result.push(entry.name)
+    //   }
+    //   return result
+    // }
   }()
 
   return fsApi
