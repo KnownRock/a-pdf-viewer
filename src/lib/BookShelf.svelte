@@ -202,11 +202,11 @@
             <Delay delay={1000}>
               <div style="text-align:center; padding: 1rem;">
                 <h3>
-                  {$t('books.noBook')}
+                  {$t('books.noBooks')}
                 </h3>
                 <!-- add some book -->
                 <Button  on:click={handleAddBooks}>
-                  {$t('books.addBook')}
+                  {$t('books.addBooks')}
                 </Button>
               </div>
             </Delay>
@@ -228,11 +228,11 @@
               <Delay delay={1000}>
                 <div style="text-align:center; padding: 1rem;">
                   <h3>
-                    {$t('books.noBook')}
+                    {$t('books.noBooks')}
                   </h3>
                   <!-- add some book -->
                   <Button  on:click={handleAddBooks}>
-                    {$t('books.addBook')}
+                    {$t('books.addBooks')}
                   </Button>
                 </div>
               </Delay>
