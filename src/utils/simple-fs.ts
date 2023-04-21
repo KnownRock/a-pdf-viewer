@@ -1,25 +1,11 @@
 
 import { get, set, del, keys } from 'idb-keyval'
 import { getResourceDir, verifyPermission } from './files'
-import type { SimpleFs, SimpleFsName } from '../types'
-
-import { SignatureV4 } from '@aws-sdk/signature-v4'
-import { Sha256 } from '@aws-crypto/sha256-browser'
-import type { HttpRequest } from '@aws-sdk/types'
-import {
-  S3Client,
-  ListBucketsCommand
-} from '@aws-sdk/client-s3'
-
-interface ReadModeResult {
-  'text': string | undefined
-  'arrayBuffer': ArrayBuffer | undefined
-}
-
-enum ReadMode {
-  'text' = 'text',
-  'arrayBuffer' = 'arrayBuffer'
-}
+import type {
+  S3Config, SimpleFs, SimpleFsName,
+  ReadMode, ReadModeResult
+} from '../types'
+import { getS3 } from './s3'
 
 async function getIdb (): Promise<SimpleFs> {
   const idbFsPrefix = 'idbfs:'
@@ -219,45 +205,9 @@ async function getFsApi (): Promise<SimpleFs> {
   return fsApi
 }
 
-async function getS3 (): Promise<SimpleFs> {
-  const s3 = new S3Client({
-    region: 'us-east-1',
-    credentials: {
-      accessKeyId: 'minioadmin',
-      secretAccessKey: 'minioadmin'
-    },
-    endpoint: 'http://127.0.0.1:9000',
-    forcePathStyle: true,
-    signer: async () => ({
-      sign: async (request: HttpRequest) => {
-        request.headers.host = `${request.hostname as string}:${(request.port as number)}`
-
-        const signatureV4 = new SignatureV4({
-          credentials: {
-            accessKeyId: 'minioadmin',
-            secretAccessKey: 'minioadmin'
-          },
-          region: 'us-east-1',
-          service: 's3',
-          sha256: Sha256
-        })
-
-        const authorizatedRequest = await signatureV4.sign(request)
-
-        return authorizatedRequest
-      }
-    })
-  })
-  s3.send(new ListBucketsCommand({})).then((data) => {
-    console.log(data)
-  })
-  // const s3: SimpleFs = {}
-}
-
-getS3().catch((e) => { console.error(e) })
-
 export async function getSimpleFs (
-  name: SimpleFsName
+  name: SimpleFsName,
+  options?: S3Config
 ): Promise<SimpleFs> {
   if (name === 'idb') {
     const idb = await getIdb()
@@ -269,5 +219,14 @@ export async function getSimpleFs (
     await fs.init()
     return fs
   }
+  if (name === 's3') {
+    if (options == null) {
+      throw new Error('Invalid options')
+    }
+    const s3 = await getS3()
+    await s3.init(options)
+    return s3
+  }
+
   throw new Error('Invalid name')
 }
