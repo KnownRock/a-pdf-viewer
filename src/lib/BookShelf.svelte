@@ -21,6 +21,9 @@
   import Button from '@smui/button'
   import Delay from './general/Delay.svelte'
   import Setting from './Setting.svelte'
+  import { getRemoteSimpleFs, syncTwoSimpleFs } from '../utils/sync'
+  import { message } from '../utils/message'
+  import { hide, show } from '../store/loading'
   export let simpleFs: SimpleFs | null
   let books = {} as Record<Book['id'], Book>
   let events = [] as Event[]
@@ -33,54 +36,15 @@
     isInitiated = value.isInitiated
   })
   
-  
-  // async function saveBookToResourceDir (
-  //   simpleFs: SimpleFs,
-  //   fileHandle: FileSystemFileHandle
-  // ) : Promise<Book['id']> {
-  //   const file = await fileHandle.getFile()
-  //   const start = performance.now()
-  //   const hash = await sha1(new Uint8Array(await file.arrayBuffer()))
-  //   const end = performance.now()
-  //   console.log(`file size:${
-  //     (file.size / 1024 / 1024).toFixed(2)
-  //   }M hash: ${
-  //     (end - start).toFixed(2)
-  //   }ms, ${
-  //     hash
-  //   }`)
-  
-  //   simpleFs.write(`books/${hash}.pdf`, await file.arrayBuffer())
-  //   const { capture, pages } = await getPdfMetaInfo(fileHandle)
-  //   simpleFs.write(`books/${hash}.png`, capture)
-  
-  //   if (books[hash]) {
-  //     return hash
-  //   }
-  
-  
-  //   addBook({
-  //     id: hash,
-  //     title: fileHandle.name,
-  //     progress: 1,
-  //     state: 'new',
-  //     pages,
-  //     updateAt: Date.now()
-  //   })
-  
-  
-  //   return hash
-  // }
-
 
   async function saveBook (
-    files: FileList
+    file: File
   ) {
     if (!simpleFs) {
       console.log('simpleFs is null')
       return
     }
-    const file = files[0]
+    // const file = files[0]
     const start = performance.now()
     const hash = await sha1(new Uint8Array(await file.arrayBuffer()))
     const end = performance.now()
@@ -115,27 +79,6 @@
   }
 
   async function handleAddBook () {
-    // open a file picker
-    // const [handle] = await window.showOpenFilePicker({
-    //   multiple: false,
-    //   types: [
-    //     {
-    //       description: 'PDF',
-    //       accept: {
-    //         'application/pdf': ['.pdf']
-    //       }
-    //     }
-    //   ]
-    // })
-  
-    // if (!simpleFs) {
-    //   console.log('simpleFs is null')
-    //   return
-    // }
-  
-    // const id = await saveBookToResourceDir(simpleFs, handle)
-    // console.log(id)
-
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = 'application/pdf'
@@ -145,46 +88,13 @@
       if (!files) {
         return
       }
-      saveBook(files)
+      saveBook(files[0])
     })
 
     input.click()
   }
   
   async function handleAddBooks () {
-    // open a folder picker
-    // const handle = await window.showDirectoryPicker({
-    //   mode: 'read',
-    //   startIn: 'documents'
-    // })
-
-    // if (!simpleFs) {
-    //   console.log('simpleFs is null')
-    //   return
-    // }
-  
-  
-    // // get files recursively
-    // async function getFiles (handle: FileSystemDirectoryHandle) {
-    //   const entries = handle.values()
-    //   for await (const entry of entries) {
-    //     if (entry.kind === 'file') {
-    //       if (entry.name.endsWith('.pdf')) {
-    //         if (!simpleFs) {
-    //           console.log('simpleFs is null')
-    //           return
-    //         }
-    //         const id = await saveBookToResourceDir(simpleFs, entry)
-    //         console.log(id)
-    //       }
-    //     } else {
-    //       await getFiles(entry)
-    //     }
-    //   }
-    // }
-  
-    // await getFiles(handle)
-
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = 'application/pdf'
@@ -198,7 +108,7 @@
       for (let i = 0; i < files.length; i++) {
         const file = files[i]
         if (file.name.endsWith('.pdf')) {
-          await saveBook(files)
+          await saveBook(file)
         }
       }
     })
@@ -208,6 +118,27 @@
   
   let isDrawerOpen = false
   
+  async function handleSync () {
+    try {
+      show()
+
+      const remoteSimpleFs = await getRemoteSimpleFs()
+      const localSimpleFs = simpleFs
+
+      if (!localSimpleFs || !remoteSimpleFs) {
+        return
+      }
+
+      await syncTwoSimpleFs(localSimpleFs, remoteSimpleFs)
+
+      message($t('message.syncSuccess'), 'success')
+    } catch (error) {
+      message(error.message, 'error')
+      navigate('/setting')
+    } finally {
+      hide()
+    }
+  }
 
   const url = ''
 
@@ -312,12 +243,30 @@
               on:click={() => { isDrawerOpen = !isDrawerOpen }}
             >menu</IconButton>
             <Title>
-              {
-                $t('app.title')
-              }
+              <Router url="{url}">
+                <Route path="/" >
+                  {
+                    $t('drawer.home')
+                  }
+                </Route>
+                <Route path="/:mode" let:params>
+                  {
+                    $t(`drawer.${params.mode}`)
+                  }
+                </Route>
+              </Router>
             </Title>
           </Section>
           <Section align="end" toolbar>
+            <!-- sync -->
+            <IconButton class="material-icons"
+              on:click={() => {
+                handleSync()
+              }}
+            >
+              sync
+            </IconButton>
+
             <!-- add book --> 
             <IconButton class="material-icons"
               on:click={() => { handleAddBook() }}
