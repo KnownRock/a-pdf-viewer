@@ -18,6 +18,7 @@
   import { message } from '../utils/message'
   import { hide, show } from '../store/loading'
   import Drawer from './Drawer.svelte'
+  import NoBooks from './NoBooks.svelte'
   export let simpleFs: SimpleFs | null
   let books = {} as Record<Book['id'], Book>
   let events = [] as Event[]
@@ -199,17 +200,7 @@
         <Route path="/" >
           {#if simpleFs}
             {#if Object.keys(books).length === 0}
-            <Delay delay={1000}>
-              <div style="text-align:center; padding: 1rem;">
-                <h3>
-                  {$t('books.noBooks')}
-                </h3>
-                <!-- add some book -->
-                <Button  on:click={handleAddBooks}>
-                  {$t('books.addBooks')}
-                </Button>
-              </div>
-            </Delay>
+              <NoBooks handleAddBooks={handleAddBooks} />
             {:else}
               <Books simpleFs={simpleFs} books={books} mode={'all'}></Books>
             {/if}
@@ -223,24 +214,11 @@
 
         <Route path="/:mode" let:params>
           {#if simpleFs}
-
             {#if Object.keys(books).length === 0}
-              <Delay delay={1000}>
-                <div style="text-align:center; padding: 1rem;">
-                  <h3>
-                    {$t('books.noBooks')}
-                  </h3>
-                  <!-- add some book -->
-                  <Button  on:click={handleAddBooks}>
-                    {$t('books.addBooks')}
-                  </Button>
-                </div>
-              </Delay>
-
+              <NoBooks handleAddBooks={handleAddBooks} />
             {:else}
               <Books simpleFs={simpleFs} books={books} mode={params.mode}></Books>
             {/if}
-            
           {:else}
             <UnSetting />
           {/if}
