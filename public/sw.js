@@ -1,33 +1,12 @@
 /* eslint-disable no-undef */
 
-
 importScripts('/workbox-sw.js')
+importScripts('/files.js')
+workbox.precaching.precacheAndRoute(files)
 
-// workbox.routing.registerRoute(
-//   new RegExp('https://jsonplaceholder.typicode.com/users'),
-//   workbox.strategies.cacheFirst()
-// )
+const handler = workbox.precaching.createHandlerBoundToURL('/index.html')
+const navigationRoute = new workbox.routing.NavigationRoute(handler, {
+  allowlist: [/^(\/[a-z0-9-]+)+$/]
+})
 
-// workbox.routing.registerRoute(
-//   new RegExp('https://fonts.(?:googleapis|gstatic).com/(.*)'),
-//   workbox.strategies.cacheFirst({
-//     cacheName: 'google-fonts',
-//     plugins: [
-//       new workbox.expiration.Plugin({
-//         maxEntries: 30
-//       }),
-//       new workbox.cacheableResponse.Plugin({
-//         statuses: [0, 200]
-//       })
-//     ]
-//   })
-// )
-
-// install
-
-
-workbox.precaching.precacheAndRoute([
-  // {
-  //   url: '/'
-  // }
-])
+workbox.routing.registerRoute(navigationRoute)
