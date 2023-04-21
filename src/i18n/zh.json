@@ -25,5 +25,18 @@
   "setting.s3.prefix": "前缀",
   "setting.title": "设置",
   "setting.s3.secretAccessKey": "秘密访问密钥",
-  "book.title": "标题"
+  "book.title": "标题",
+  "books.addBooks": "添加图书",
+  "books.noBooks": "没有图书",
+  "notFound.button": "回到首页",
+  "notFound.message": "抱歉，您要查找的页面不存在。",
+  "notFound.title": "未找到",
+  "title.bookmark": "书签",
+  "title.done": "阅毕",
+  "title.home": "首页",
+  "title.new": "新增",
+  "title.notFound": "未找到页面",
+  "title.reading": "阅读中",
+  "title.setting": "设置",
+  "title.trash": "回收站"
 }

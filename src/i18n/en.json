@@ -25,5 +25,24 @@
   "drawer.subheader": "Other",
   "drawer.setting": "Settings",
   "permission.dialog.title": "Permission",
-  "book.title": "Title"
+  "book.title": "Title",
+
+  "title.home": "Home",
+  "title.bookmark": "Bookmark",
+  "title.new": "New",
+  "title.reading": "Reading",
+  "title.done": "Done",
+  "title.trash": "Recycle Bin",
+  "title.subheader": "Other",
+  "title.setting": "Settings",
+  "title.notFound": "Not Found",
+
+
+  "notFound.title": "Not Found",
+  "notFound.message": "Sorry, the page you are looking for does not exist.",
+  "notFound.button": "Back to Home",
+
+  "books.noBooks": "No books",
+  "books.addBooks": "Add Books"
+
 }
