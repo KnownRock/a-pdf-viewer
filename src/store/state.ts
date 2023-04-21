@@ -1,6 +1,15 @@
 import { writable, get } from 'svelte/store'
-import type { Book, Event, SimpleFs } from '../types'
+import type { Book, Event, EventRaw, SimpleFs } from '../types'
 import { simpleFs as simpleFsStore } from '.'
+import { v4 as uuid } from 'uuid'
+
+function genEvent (e: EventRaw): Event {
+  return {
+    ...e,
+    timestamp: Date.now(),
+    eid: uuid()
+  }
+}
 
 const store = writable<{
   books: Record<Book['id'], Book>
@@ -97,15 +106,14 @@ export async function updateBookProgress (id: Book['id'], progress: Book['progre
     state.books[id].progress = progress
     state.books[id].updateAt = Date.now()
 
-    state.events.push({
+    state.events.push(genEvent({
       type: 'update',
       payload: {
         id,
         prop: 'progress',
         progress
-      },
-      timestamp: Date.now()
-    })
+      }
+    }))
 
     return state
   })
@@ -118,15 +126,14 @@ export async function updateBookTitle (id: Book['id'], title: Book['title']): Pr
     state.books[id].title = title
     state.books[id].updateAt = Date.now()
 
-    state.events.push({
+    state.events.push(genEvent({
       type: 'update',
       payload: {
         id,
         prop: 'title',
         title
-      },
-      timestamp: Date.now()
-    })
+      }
+    }))
 
     return state
   })
@@ -139,15 +146,14 @@ export async function updateBookState (id: Book['id'], bookState: Book['state'])
     state.books[id].state = bookState
     state.books[id].updateAt = Date.now()
 
-    state.events.push({
+    state.events.push(genEvent({
       type: 'update',
       payload: {
         id,
         prop: 'state',
         state: bookState
-      },
-      timestamp: Date.now()
-    })
+      }
+    }))
 
     return state
   })
@@ -156,14 +162,23 @@ export async function updateBookState (id: Book['id'], bookState: Book['state'])
 }
 
 export async function deleteBook (id: string): Promise<void> {
+  const simpleFs = get(simpleFsStore).simpleFs
+  if (simpleFs == null) {
+    console.error('simpleFs is null')
+    return
+  }
+
+  await simpleFs.delete(`books/${id}.pdf`)
+  await simpleFs.delete(`books/${id}.png`)
+
   store.update((state) => {
-    state.events.push({
+    state.events.push(genEvent({
       type: 'del',
       payload: {
         id
-      },
-      timestamp: Date.now()
-    })
+      }
+    }))
+
     return {
       ...state,
       books: Object.fromEntries(Object.entries(state.books).filter(([key]) => key !== id))
@@ -176,13 +191,12 @@ export async function deleteBook (id: string): Promise<void> {
 export async function addBook (book: Book): Promise<void> {
   store.update((state) => {
     state.books[book.id] = book
-    state.events.push({
+    state.events.push(genEvent({
       type: 'add',
       payload: {
         id: book.id
-      },
-      timestamp: Date.now()
-    })
+      }
+    }))
     return state
   })
 
