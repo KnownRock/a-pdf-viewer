@@ -2,10 +2,9 @@
 import { get, set, del, keys } from 'idb-keyval'
 import { getResourceDir, verifyPermission } from './files'
 import type {
-  S3Config, SimpleFs, SimpleFsName,
+  SimpleFs, SimpleFsName,
   ReadMode, ReadModeResult
 } from '../types'
-import { getS3 } from './s3'
 
 async function getIdb (): Promise<SimpleFs> {
   const idbFsPrefix = 'idbfs:'
@@ -206,8 +205,8 @@ async function getFsApi (): Promise<SimpleFs> {
 }
 
 export async function getSimpleFs (
-  name: SimpleFsName,
-  options?: S3Config
+  name: SimpleFsName
+  // options?: S3Config
 ): Promise<SimpleFs> {
   if (name === 'idb') {
     const idb = await getIdb()
@@ -219,14 +218,14 @@ export async function getSimpleFs (
     await fs.init()
     return fs
   }
-  if (name === 's3') {
-    if (options == null) {
-      throw new Error('Invalid options')
-    }
-    const s3 = await getS3()
-    await s3.init(options)
-    return s3
-  }
+  // if (name === 's3') {
+  //   if (options == null) {
+  //     throw new Error('Invalid options')
+  //   }
+  //   const s3 = await getS3()
+  //   await s3.init(options)
+  //   return s3
+  // }
 
   throw new Error('Invalid name')
 }

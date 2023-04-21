@@ -1,5 +1,4 @@
-import { getSimpleFs } from '../utils/simple-fs'
-import { SimpleFsName, type SimpleFs, type Book, type Event } from '../types'
+import type { SimpleFs, Book, Event } from '../types'
 import { getS3Config } from '../utils/config'
 import { state } from '../store'
 export async function getRemoteSimpleFs (): Promise<SimpleFs> {
@@ -8,8 +7,10 @@ export async function getRemoteSimpleFs (): Promise<SimpleFs> {
     throw new Error('Invalid endpoint')
   }
 
-  const s3 = await getSimpleFs(SimpleFsName.s3, s3Config)
-
+  // const s3 = await getSimpleFs(SimpleFsName.s3, s3Config)
+  const { getS3 } = await import('./s3')
+  const s3 = await getS3()
+  await s3.init(s3Config)
   return s3
 }
 

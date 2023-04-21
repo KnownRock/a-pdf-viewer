@@ -1,12 +1,12 @@
 <script lang="ts">
-  import BookShelf from './lib/BookShelf.svelte'
-  import Resume from './lib/Resume.svelte'
+  // import BookShelf from './lib/BookShelf.svelte'
+  // import Resume from './lib/Resume.svelte'
   import Loading from './lib/Loading.svelte'
-  import PermissionCheck from './lib/PermissionCheck.svelte'
+  // import PermissionCheck from './lib/PermissionCheck.svelte'
   import { isLoading } from 'svelte-i18n'
 
   import { simpleFs as simpleFsStore } from './store'
-  import Viewer from './lib/Viewer.svelte'
+  // import Viewer from './lib/Viewer.svelte'
   import { SimpleFsName, type SimpleFs } from './types'
 
   let simpleFs: SimpleFs | null = null
@@ -43,19 +43,27 @@
     <Loading isStaticallyLoading={true} />
   </Delay>
 {:else}
-  <Resume />
-  <PermissionCheck />
+  <!-- <Resume /> -->
+  <!-- <PermissionCheck /> -->
   <Message />
   <Loading />
 
 
   <Router url="{url}">
     <Route path="/book/:id" let:params >
-      <Viewer simpleFs={simpleFs} bookId={params.id} />
+      {#await import('./lib/Viewer.svelte').then((module) => module.default)}
+        loading
+      {:then Viewer}
+        <Viewer simpleFs={simpleFs} bookId={params.id} />
+      {/await}
     </Route>
 
     <Route path="/*" >
-      <BookShelf simpleFs={simpleFs}  />
+      {#await import('./lib/BookShelf.svelte').then((module) => module.default)}
+        loading
+      {:then BookShelf}
+        <BookShelf simpleFs={simpleFs}  />
+      {/await}
     </Route>
   </Router>
 

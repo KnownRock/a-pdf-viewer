@@ -63,7 +63,7 @@ export interface SimpleFs {
 export enum SimpleFsName {
   idb = 'idb',
   fsapi = 'fsapi',
-  s3 = 's3'
+  // s3 = 's3'
 }
 
 export interface S3Config {

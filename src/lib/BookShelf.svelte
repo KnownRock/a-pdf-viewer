@@ -9,21 +9,15 @@
   import IconButton from '@smui/icon-button'
   import { state } from '../store'
   import { addBook } from '../store/state'
-  import Drawer, {
-    AppContent,
-    Content,
-    Header,
-    Title as DrawerTitle,
-    Subtitle
-  } from '@smui/drawer'
-  import List, { Graphic, Item, Separator, Subheader, Text } from '@smui/list'
+  import { AppContent } from '@smui/drawer'
   import UnSetting from './UnSetting.svelte'
   import Button from '@smui/button'
   import Delay from './general/Delay.svelte'
   import Setting from './Setting.svelte'
-  import { getRemoteSimpleFs, syncTwoSimpleFs } from '../utils/sync'
+  // import { getRemoteSimpleFs, syncTwoSimpleFs } from '../utils/sync'
   import { message } from '../utils/message'
   import { hide, show } from '../store/loading'
+  import Drawer from './Drawer.svelte'
   export let simpleFs: SimpleFs | null
   let books = {} as Record<Book['id'], Book>
   let events = [] as Event[]
@@ -122,6 +116,8 @@
     try {
       show()
 
+      const { getRemoteSimpleFs, syncTwoSimpleFs } = await import('../utils/sync')
+
       const remoteSimpleFs = await getRemoteSimpleFs()
       const localSimpleFs = simpleFs
 
@@ -144,93 +140,8 @@
 
 </script>
 <div>
-  <div  class="drawer-container">
-    <Drawer variant="dismissible" bind:open={isDrawerOpen}>
-      <Header>
-        <DrawerTitle>{
-          $t('drawer.title')
-        }</DrawerTitle>
-        <Subtitle>
-          {
-            $t('drawer.subtitle')
-          }
-        </Subtitle>
-      </Header>
-      <Content>
-        <List>
-          <Item on:click={() => { navigate('/') }}>
-            <!-- <Icon class="material-icons">home</Icon> -->
-            <Graphic class="material-icons" aria-hidden="true">home</Graphic>
-            <Text>{
-              $t('drawer.home')
-            }</Text>
-          </Item>
-
-          <Item on:click={() => { navigate('/bookmark') }}>
-            <Graphic class="material-icons" aria-hidden="true">bookmark</Graphic>
-            <Text>{
-              $t('drawer.bookmark')
-              }</Text>
-          </Item>
-          <Item on:click={() => { navigate('/new') }}>
-            <Graphic class="material-icons" aria-hidden="true">
-              new_label
-            </Graphic>
-            <Text>
-              {
-                $t('drawer.new')
-              }
-            </Text>
-          </Item>
-          <Item on:click={() => { navigate('/reading') }}>
-            <Graphic class="material-icons" aria-hidden="true">
-              book
-            </Graphic>
-            <Text>
-              {
-                $t('drawer.reading')
-              }
-            </Text>
-          </Item>
-          <Item on:click={() => { navigate('/done') }}>
-            <Graphic class="material-icons" aria-hidden="true">
-              done
-            </Graphic>
-            <Text>
-              {
-                $t('drawer.done')
-              }
-            </Text>
-          </Item>
-          <Item on:click={() => { navigate('/trash') }} >
-            <Graphic class="material-icons" aria-hidden="true">
-              delete
-            </Graphic>
-            <Text>
-              {
-                $t('drawer.trash')
-              }
-            </Text>
-          </Item>
-          <Separator />
-          <Subheader tag="h6">
-            {
-              $t('drawer.subheader')
-            }
-          </Subheader>
-          <Item on:click={() => { navigate('/setting') }}>
-            <Graphic class="material-icons" aria-hidden="true">
-              settings
-            </Graphic>
-            <Text>
-              {
-                $t('drawer.setting')
-              }
-            </Text>
-          </Item>
-        </List>
-      </Content>
-    </Drawer>
+  <div class="drawer-container">
+    <Drawer bind:isDrawerOpen={isDrawerOpen} />
 
     <AppContent class="app-content">
       <TopAppBar
