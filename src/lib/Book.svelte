@@ -13,13 +13,16 @@
   export let mode: string
   import Ripple from '@smui/ripple'
   // import { viewer } from '../store'
-  import bookPng from '../assets/book.png'
-  let cover = bookPng
+  // import bookPng from '../assets/book.png'
+  import whitePng from '../assets/white.png'
+  let cover = whitePng
 
   let bookTitle = book.title
 
   onMount(async () => {
+    const bookPng = await import('../assets/book.png').then((module) => module.default)
     const result = await simpleFs.read(`books/${book.id}.png`, 'arrayBuffer')
+
     if (result) {
       const coverBlob = new Blob([result], { type: 'image/png' })
       const coverUrl = URL.createObjectURL(coverBlob)
