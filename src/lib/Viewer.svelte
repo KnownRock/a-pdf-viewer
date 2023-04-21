@@ -397,9 +397,7 @@
   {#if !pdf}
     <div>loading...</div>
   {:else}
-    <div >
-
-
+    <div id="pdf-viewer">
         <VirtualList
           height={height}
           width="auto"
@@ -619,4 +617,10 @@
     margin-bottom: 50px;
   }
 
+  :global(#pdf-viewer .virtual-list-wrapper){
+    overflow: hidden;
+  }
+  
+
 </style>
+
