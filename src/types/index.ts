@@ -9,7 +9,7 @@ export interface Book {
   updateAt: number
 }
 
-export type Event = ({
+export type EventRaw = ({
   type: 'add' | 'del'
   payload: {
     id: Book['id']
@@ -35,8 +35,11 @@ export type Event = ({
     prop: 'state'
     state: Book['state']
   }
-}) & {
+})
+
+export type Event = EventRaw & {
   timestamp: number
+  eid: string
 }
 
 export type BooksDiaplayMode = 'all' | 'bookmark' | 'reading' | 'done' | 'trash' | 'new'
@@ -59,5 +62,27 @@ export interface SimpleFs {
 
 export enum SimpleFsName {
   idb = 'idb',
-  fsapi = 'fsapi'
+  fsapi = 'fsapi',
+  s3 = 's3'
+}
+
+export interface S3Config {
+  accessKeyId: string
+  secretAccessKey: string
+  region: string
+  bucket: string
+  endpoint: string
+  prefix: string
+}
+
+export type MessageType = 'error' | 'info' | 'success' | 'warning'
+
+export interface ReadModeResult {
+  'text': string | undefined
+  'arrayBuffer': ArrayBuffer | undefined
+}
+
+export enum ReadMode {
+  'text' = 'text',
+  'arrayBuffer' = 'arrayBuffer'
 }

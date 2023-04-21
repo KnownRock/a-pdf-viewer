@@ -116,7 +116,7 @@
   }
   
 
-  $:isLeftMouseDown
+  $:isLeftMouseDown || !inited
     ? (() => {
         console.log('instant')
         scrollToBehaviour = 'instant'
@@ -280,7 +280,10 @@
 
     pdf = p
 
-    inited = true
+
+    setTimeout(() => {
+      inited = true
+    }, 300)
   }
 
   $: bookId && load()
@@ -383,7 +386,7 @@
   on:touchmove={handleTouchMove}
   on:mouseleave={handleMouseLeave}
   on:click={handleClick}
-
+  
   use:pinch
   on:pinch="{handlePinch}"
   
@@ -395,8 +398,7 @@
     <div>loading...</div>
   {:else}
     <div >
-      
-      {#if inited}
+
 
         <VirtualList
           height={height}
@@ -407,12 +409,14 @@
           getKey={index => index}
           scrollToBehaviour={scrollToBehaviour}
           scrollOffset={scrollOffset}
+          overscanCount={inited ? 1 : 0}
 
           on:afterScroll={async (event) => {
             scrollOffset = event.detail.offset
           }}
         >
           <div slot="item" let:index let:style {style} class="page">
+            {#if inited}
             <Page 
               on:prev={() => {
                 console.log('prev', index)
@@ -430,10 +434,11 @@
               }}
               {offsetX}
               {scale} {pdf} pageIndex={index + 1} bind:height={pdfPageHeight} />
+            {/if}
           </div>
           
         </VirtualList>
-      {/if}
+
 
       {#if isMenuShown}
         <div class="menu top" on:click={e => { e.stopPropagation() }}> 
