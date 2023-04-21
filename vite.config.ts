@@ -32,7 +32,7 @@ export default defineConfig({
         const revisionFiles = files.map((file) => {
           return {
             url: file,
-            revision: +new Date()
+            revision: (+new Date())+ ''
           }
         })
 
