@@ -12,5 +12,6 @@ console.log(loc)
 
 void init({
   fallbackLocale: 'en',
-  initialLocale: loc // 'en'
+  initialLocale: loc, // 'en',
+  loadingDelay: 0
 })
