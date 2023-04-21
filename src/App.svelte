@@ -19,6 +19,7 @@
   import { onMount } from 'svelte'
   import { getSimpleFs } from './utils/simple-fs'
   import Message from './lib/Message.svelte'
+  import Delay from './lib/general/Delay.svelte'
   // import { getSimpleFsName } from './utils/config'
 
   onMount(() => {
@@ -38,7 +39,9 @@
 </script>
 
 {#if $isLoading}
-  <div>loading...</div>
+  <Delay>
+    <Loading isStaticallyLoading={true} />
+  </Delay>
 {:else}
   <Resume />
   <PermissionCheck />
