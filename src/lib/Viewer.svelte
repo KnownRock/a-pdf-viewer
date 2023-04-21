@@ -617,9 +617,9 @@
     margin-bottom: 50px;
   }
 
-  :global(#pdf-viewer .virtual-list-wrapper){
+  /* :global(#pdf-viewer .virtual-list-wrapper){
     overflow: hidden;
-  }
+  } */
   
 
 </style>
