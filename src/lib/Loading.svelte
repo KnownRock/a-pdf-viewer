@@ -7,9 +7,7 @@
   loading.subscribe((value) => {
     isShow = value.isShow
   })
-
 </script>
-
 
 <Dialog open={isShow}>
   <Content>
