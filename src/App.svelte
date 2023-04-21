@@ -1,5 +1,6 @@
 <script lang="ts">
   import BookShelf from './lib/BookShelf.svelte'
+  import Resume from './lib/Resume.svelte'
   import Loading from './lib/Loading.svelte'
   import PermissionCheck from './lib/PermissionCheck.svelte'
   import { isLoading } from 'svelte-i18n'
@@ -17,6 +18,7 @@
   import { Router, Route } from 'svelte-routing'
   import { onMount } from 'svelte'
   import { getSimpleFs } from './utils/simple-fs'
+  import Message from './lib/Message.svelte'
   // import { getSimpleFsName } from './utils/config'
 
   onMount(() => {
@@ -38,8 +40,10 @@
 {#if $isLoading}
   <div>loading...</div>
 {:else}
-  <Loading />
+  <Resume />
   <PermissionCheck />
+  <Message />
+  <Loading />
 
 
   <Router url="{url}">
