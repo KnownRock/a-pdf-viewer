@@ -41,7 +41,7 @@ export default defineConfig({
     }
   }],
   build: {
-    manifest: true
+    // manifest: true
   },
 
 })
