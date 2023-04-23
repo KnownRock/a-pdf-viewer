@@ -15,6 +15,7 @@
   pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf/pdf.worker.js'
   import { navigate } from 'svelte-routing'
   import { pinch } from 'svelte-gestures'
+  import { throttle } from '../utils/helper'
 
   export let simpleFs: SimpleFs | null
   export let bookId: string | null = null
@@ -221,16 +222,6 @@
     }
   }
 
-  function throttle<T> (fn: Function, wait: number) {
-    let time = Date.now()
-    return function (...args: any[]) {
-      if ((time + wait - Date.now()) < 0) {
-        fn(...args)
-        time = Date.now()
-      }
-    } as T
-  }
-
   function saveOffsetX (offsetX: number) {
     set(`${bookId}-offset-x`, offsetX)
   }
@@ -272,12 +263,17 @@
     const viewport = page.getViewport({ scale })
     pdfPageHeight = viewport.height
 
-
     const bookProgress = book?.progress ?? 1
     progress = bookProgress
 
-    scrollOffset = (bookProgress - 1) * pdfPageHeight + await get(`${bookId}-offset-y`) ?? 0
+    console.log(await get(`${bookId}-offset-y`))
 
+    let scrollOffsetY = (await get(`${bookId}-offset-y`)) ?? 0
+    if (isNaN(scrollOffsetY)) {
+      scrollOffsetY = 0
+    }
+  
+    scrollOffset = (bookProgress - 1) * pdfPageHeight + scrollOffsetY
     pdf = p
 
 
@@ -616,11 +612,10 @@
     /* align-items: center; */
     margin-bottom: 50px;
   }
-
-  /* :global(#pdf-viewer .virtual-list-wrapper){
-    overflow: hidden;
-  } */
   
+  :global(::-webkit-scrollbar){
+    display: none;
+  }
 
 </style>
 
