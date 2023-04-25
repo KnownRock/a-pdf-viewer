@@ -9,10 +9,14 @@ const App2 = App as unknown as new (options: any) => any
 const app = new App2({
   target: document.getElementById('app')
 })
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').catch((err) => {
-    console.error(err)
-  })
+
+// only register service worker in production
+if (import.meta.env.PROD) {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch((err) => {
+      console.error(err)
+    })
+  }
 }
 
 export default app

@@ -1,17 +1,9 @@
 import type { SimpleFs, Book, Event } from '../types'
-import { getS3Config } from '../utils/config'
 import { state } from '../store'
 export async function getRemoteSimpleFs (): Promise<SimpleFs> {
-  const s3Config = await getS3Config()
-  if (s3Config.endpoint === '') {
-    throw new Error('Invalid endpoint')
-  }
-
-  // const s3 = await getSimpleFs(SimpleFsName.s3, s3Config)
-  const { getS3 } = await import('./s3')
-  const s3 = await getS3()
-  await s3.init(s3Config)
-  return s3
+  const { getGoogleDriveSimpleFs } = await import('./google-drive')
+  const googleDrive = await getGoogleDriveSimpleFs()
+  return googleDrive
 }
 
 async function getBooksAndEvents (simpleFs: SimpleFs): Promise<{
@@ -21,12 +13,24 @@ async function getBooksAndEvents (simpleFs: SimpleFs): Promise<{
   let books: Record<Book['id'], Book> = {}
   let events = [] as Event[]
 
-  const booksJson = await simpleFs.read('books.json', 'text')
+  // const booksJson = await simpleFs.read('books.json', 'text')
+  // if (booksJson !== undefined) {
+  //   books = JSON.parse(booksJson as string) as Record<Book['id'], Book>
+  // }
+
+  // const eventsJson = await simpleFs.read('events.json', 'text')
+  // if (eventsJson !== undefined) {
+  //   events = JSON.parse(eventsJson as string) as Event[]
+  // }
+
+  const [booksJson, eventsJson] = await Promise.all([
+    simpleFs.read('books.json', 'text'),
+    simpleFs.read('events.json', 'text')
+  ])
+
   if (booksJson !== undefined) {
     books = JSON.parse(booksJson as string) as Record<Book['id'], Book>
   }
-
-  const eventsJson = await simpleFs.read('events.json', 'text')
   if (eventsJson !== undefined) {
     events = JSON.parse(eventsJson as string) as Event[]
   }
@@ -210,11 +214,18 @@ export async function syncTwoSimpleFs (
     }
   })
 
-  await target.write(booksJsonPath, JSON.stringify(latestBooks))
-  await target.write(eventsJsonPath, JSON.stringify(latestEvents))
+  // await target.write(booksJsonPath, JSON.stringify(latestBooks))
+  // await target.write(eventsJsonPath, JSON.stringify(latestEvents))
 
-  await source.write(booksJsonPath, JSON.stringify(latestBooks))
-  await source.write(eventsJsonPath, JSON.stringify(latestEvents))
+  await Promise.all([
+    source.write(booksJsonPath, JSON.stringify(latestBooks)),
+    source.write(eventsJsonPath, JSON.stringify(latestEvents)),
+    target.write(booksJsonPath, JSON.stringify(latestBooks)),
+    target.write(eventsJsonPath, JSON.stringify(latestEvents))
+  ])
+
+  // await source.write(booksJsonPath, JSON.stringify(latestBooks))
+  // await source.write(eventsJsonPath, JSON.stringify(latestEvents))
 
   const needDeleteLocalBookIds = Object.keys(localBooks).filter((id) => {
     return latestBooks[id] === undefined
@@ -224,15 +235,29 @@ export async function syncTwoSimpleFs (
     return latestBooks[id] === undefined
   })
 
-  for (const id of needDeleteLocalBookIds) {
-    await source.delete(`books/${id}.pdf`)
-    await source.delete(`books/${id}.png`)
-  }
+  // for (const id of needDeleteLocalBookIds) {
+  //   await source.delete(`books/${id}.pdf`)
+  //   await source.delete(`books/${id}.png`)
+  // }
 
-  for (const id of needDeleteRemoteBookIds) {
-    await target.delete(`books/${id}.pdf`)
-    await target.delete(`books/${id}.png`)
-  }
+  await Promise.all(
+    needDeleteLocalBookIds.map(async (id) => {
+      await source.delete(`books/${id}.pdf`)
+      await source.delete(`books/${id}.png`)
+    })
+  )
+
+  // for (const id of needDeleteRemoteBookIds) {
+  //   await target.delete(`books/${id}.pdf`)
+  //   await target.delete(`books/${id}.png`)
+  // }
+
+  await Promise.all(
+    needDeleteRemoteBookIds.map(async (id) => {
+      await target.delete(`books/${id}.pdf`)
+      await target.delete(`books/${id}.png`)
+    })
+  )
 
   state.update((state) => {
     state.books = latestBooks

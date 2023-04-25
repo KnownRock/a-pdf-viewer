@@ -43,6 +43,10 @@
   "notFound.button": "Back to Home",
 
   "books.noBooks": "No books",
-  "books.addBooks": "Add Books"
+  "books.addBooks": "Add Books",
+
+  "setting.googleDrive": "Google Drive",
+  "setting.googleDrive.description": "Google Drive settings",
+  "setting.googleDrive.button.revoke": "Revoke Google Drive Access"
 
 }
