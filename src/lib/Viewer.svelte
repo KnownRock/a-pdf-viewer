@@ -144,8 +144,8 @@
     touchStartY = event.touches[0].clientY
     touchStartX = event.touches[0].clientX
 
-    event.preventDefault()
-    event.stopPropagation()
+    // event.preventDefault()
+    // event.stopPropagation()
   }
 
   function handleMouseUp (event: MouseEvent) {
@@ -177,8 +177,8 @@
     oldTouchX = null
     oldTouchY = null
 
-    e.preventDefault()
-    e.stopPropagation()
+    // e.preventDefault()
+    // e.stopPropagation()
   }
 
   let progress = 1
@@ -219,15 +219,15 @@
       }
 
   
-      scrollOffset -= event.touches[0].clientY - oldTouchY
+      // scrollOffset -= event.touches[0].clientY - oldTouchY
   
   
-      oldTouchY = event.touches[0].clientY
+      // oldTouchY = event.touches[0].clientY
 
       isNotClick = true
 
-      event.preventDefault()
-      event.stopPropagation()
+      // event.preventDefault()
+      // event.stopPropagation()
     }
   }
 
