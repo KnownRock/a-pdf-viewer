@@ -143,6 +143,9 @@
 
     touchStartY = event.touches[0].clientY
     touchStartX = event.touches[0].clientX
+
+    event.preventDefault()
+    event.stopPropagation()
   }
 
   function handleMouseUp (event: MouseEvent) {
@@ -173,6 +176,9 @@
   
     oldTouchX = null
     oldTouchY = null
+
+    e.preventDefault()
+    e.stopPropagation()
   }
 
   let progress = 1
@@ -219,6 +225,9 @@
       oldTouchY = event.touches[0].clientY
 
       isNotClick = true
+
+      event.preventDefault()
+      event.stopPropagation()
     }
   }
 
