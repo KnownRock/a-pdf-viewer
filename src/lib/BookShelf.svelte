@@ -13,9 +13,10 @@
   import UnSetting from './UnSetting.svelte'
   import Setting from './Setting.svelte'
   import { message } from '../utils/message'
-  import { hide, show } from '../store/loading'
+  // import { hide, show } from '../store/loading'
   import Drawer from './Drawer.svelte'
   import NoBooks from './NoBooks.svelte'
+  import Loading from './Loading.svelte'
   export let simpleFs: SimpleFs | null
   let books = {} as Record<Book['id'], Book>
   let events = [] as Event[]
@@ -59,7 +60,7 @@
   
     addBook({
       id: hash,
-      title: file.name,
+      title: file.name.replace(/\.pdf$/, ''),
       progress: 1,
       state: 'new',
       pages,
@@ -109,10 +110,12 @@
   }
   
   let isDrawerOpen = false
-  
+  let loadingMessage: undefined | string
+  let isLoading = false
   async function handleSync () {
     try {
-      show()
+      // show()
+      isLoading = true
 
       const { getRemoteSimpleFs, syncTwoSimpleFs } = await import('../utils/sync')
 
@@ -123,20 +126,28 @@
         return
       }
 
-      await syncTwoSimpleFs(localSimpleFs, remoteSimpleFs)
+      await syncTwoSimpleFs(localSimpleFs, remoteSimpleFs, (hint) => {
+        loadingMessage = hint
+      })
+
+      loadingMessage = undefined
 
       message($t('message.syncSuccess'), 'success')
     } catch (error) {
       message(error.message, 'error')
       navigate('/setting')
     } finally {
-      hide()
+      // hide()
+      isLoading = false
     }
   }
 
   const url = ''
 
 </script>
+{#if isLoading}
+<Loading  isStaticallyLoading={true} message={loadingMessage}/>
+{/if}
 <div>
   <div class="drawer-container">
     <Drawer bind:isDrawerOpen={isDrawerOpen} />
