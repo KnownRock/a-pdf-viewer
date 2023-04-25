@@ -139,12 +139,16 @@ async function loadExternalScript (src: string): Promise<void> {
     return
   }
 
-  isLoadedDict[src] = new Promise<void>((resolve) => {
+  isLoadedDict[src] = new Promise<void>((resolve, reject) => {
     const script = document.createElement('script')
     script.src = src
     script.onload = () => {
       resolve()
     }
+    script.onerror = () => {
+      reject(new Error(`Failed to load script ${src}`))
+    }
+
     document.body.appendChild(script)
   })
 
