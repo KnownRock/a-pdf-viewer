@@ -20,7 +20,12 @@
   
 </script>
 
-<Dialog open={isShow}>
+<Dialog open={isShow}
+  scrimClickAction=""
+  escapeKeyAction=""
+  aria-labelledby="mandatory-title"
+  aria-describedby="mandatory-content"
+>
   <Content>
     <div style="
     display: flex; justify-content: center; align-items: center; height: 100px;
