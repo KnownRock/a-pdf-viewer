@@ -43,14 +43,19 @@ async function getBooksAndEvents (simpleFs: SimpleFs): Promise<{
 
 export async function syncTwoSimpleFs (
   source: SimpleFs,
-  target: SimpleFs
+  target: SimpleFs,
+
+  onProgress: (hint: string) => void = () => {}
 ): Promise<void> {
   const booksJsonPath = 'books.json'
   const eventsJsonPath = 'events.json'
 
+  onProgress('Getting books and events from source...')
   const { books: localBooks, events: localEvents } = await getBooksAndEvents(source)
+  onProgress('Getting books and events from target...')
   const { books: remoteBooks, events: remoteEvents } = await getBooksAndEvents(target)
 
+  onProgress('Merging books and events...')
   const eventByEidDict: Record<string, Event> = {}
   localEvents.forEach((event) => {
     eventByEidDict[event.eid] = event
@@ -144,6 +149,7 @@ export async function syncTwoSimpleFs (
       throw new Error(`Book ${id} not found`)
     }
 
+    onProgress(`Downloading book ${remoteBooks[id].title}...`)
     const bookBuffer = await target.read(`books/${id}.pdf`, 'arrayBuffer')
     if (bookBuffer === undefined) {
       console.error(`Book ${id} not found`)
@@ -151,6 +157,7 @@ export async function syncTwoSimpleFs (
     }
     await source.write(`books/${id}.pdf`, bookBuffer as ArrayBuffer)
 
+    onProgress(`Downloading book ${remoteBooks[id].title} cover...`)
     const bookPngBuffer = await target.read(`books/${id}.png`, 'arrayBuffer')
     if (bookPngBuffer === undefined) {
       console.error(`Book ${id} not found`)
@@ -165,6 +172,7 @@ export async function syncTwoSimpleFs (
       throw new Error(`Book ${id} not found`)
     }
 
+    onProgress(`Uploading book ${localBooks[id].title}...`)
     const bookBuffer = await source.read(`books/${id}.pdf`, 'arrayBuffer')
     if (bookBuffer === undefined) {
       console.error(`Book ${id} not found`)
@@ -172,6 +180,7 @@ export async function syncTwoSimpleFs (
     }
     await target.write(`books/${id}.pdf`, bookBuffer as ArrayBuffer)
 
+    onProgress(`Uploading book ${localBooks[id].title} cover...`)
     const bookPngBuffer = await source.read(`books/${id}.png`, 'arrayBuffer')
     if (bookPngBuffer === undefined) {
       console.error(`Book ${id} not found`)
@@ -180,6 +189,7 @@ export async function syncTwoSimpleFs (
     await target.write(`books/${id}.png`, bookPngBuffer as ArrayBuffer)
   }
 
+  onProgress('Merging books and events...')
   const latestBooks: Record<Book['id'], Book> = {}
   for (const [id, book] of mergedBooks) {
     latestBooks[id] = book
@@ -217,6 +227,7 @@ export async function syncTwoSimpleFs (
   // await target.write(booksJsonPath, JSON.stringify(latestBooks))
   // await target.write(eventsJsonPath, JSON.stringify(latestEvents))
 
+  onProgress('Writing books and events...')
   await Promise.all([
     source.write(booksJsonPath, JSON.stringify(latestBooks)),
     source.write(eventsJsonPath, JSON.stringify(latestEvents)),
@@ -240,6 +251,7 @@ export async function syncTwoSimpleFs (
   //   await source.delete(`books/${id}.png`)
   // }
 
+  onProgress('Deleting books...')
   await Promise.all(
     needDeleteLocalBookIds.map(async (id) => {
       await source.delete(`books/${id}.pdf`)

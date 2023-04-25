@@ -5,6 +5,7 @@
   import { onMount } from 'svelte'
 
   export let isStaticallyLoading = false
+  export let message : undefined | string
 
   let isShow = false
   onMount(() => {
@@ -30,7 +31,14 @@
     <div style="
     display: flex; justify-content: center; align-items: center; height: 100px;
     ">
-      <CircularProgress style="height: 64px; width: 64px;" indeterminate />
+      {#if message !== undefined}
+        <div style="margin-right: 1em;">
+          {message}
+        </div>
+      {/if}
+      <div style="height: 80px; width: 80px;overflow: hidden;">
+        <CircularProgress style="height: 64px; width: 64px;" indeterminate />
+      </div>
     </div>
     
   </Content>
