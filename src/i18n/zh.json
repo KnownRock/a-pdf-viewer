@@ -38,5 +38,9 @@
   "title.notFound": "未找到页面",
   "title.reading": "阅读中",
   "title.setting": "设置",
-  "title.trash": "回收站"
+  "title.trash": "回收站",
+  "setting.googleDrive": "谷歌云端硬盘",
+  "setting.googleDrive.button.revoke": "撤销 Google 云端硬盘访问权限",
+  "setting.googleDrive.description": "谷歌云端硬盘设置",
+  "title.subheader": "其他"
 }
