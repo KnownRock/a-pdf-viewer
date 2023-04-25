@@ -18,7 +18,10 @@
 
     "types": [
       "svelte-gesture/globals",
-      "aws-sdk"
+      "aws-sdk",
+      "@maxim_mazurok/gapi.client.drive-v3",
+      "gapi",
+      "google.accounts"
     ]
 
   },
