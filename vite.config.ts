@@ -29,7 +29,11 @@ export default defineConfig({
       async handler() {
         // console.log('closeBundle')
         const files = readFiles('./dist')
-        const revisionFiles = files.map((file) => {
+        const revisionFiles = files
+        .filter((file) => {
+          return !file.endsWith('.map') || file === '/sw.js'
+        })
+        .map((file) => {
           return {
             url: file,
             revision: (+new Date())+ ''
