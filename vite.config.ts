@@ -43,5 +43,8 @@ export default defineConfig({
   build: {
     // manifest: true
   },
+  server:{
+    port:5174
+  }
 
 })
