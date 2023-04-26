@@ -26,12 +26,12 @@ export default defineConfig({
     name: 'my-plugin',
     closeBundle: {
       sequential: true,
-      async handler() {
+      handler() {
         // console.log('closeBundle')
         const files = readFiles('./dist')
         const revisionFiles = files
         .filter((file) => {
-          return !file.endsWith('.map') || file === '/sw.js'
+          return !file.endsWith('.map') || file === '/sw.js' || file === '/files.js'
         })
         .map((file) => {
           return {
