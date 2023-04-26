@@ -42,5 +42,13 @@
   "setting.googleDrive": "谷歌云端硬盘",
   "setting.googleDrive.button.revoke": "撤销 Google 云端硬盘访问权限",
   "setting.googleDrive.description": "谷歌云端硬盘设置",
-  "title.subheader": "其他"
+  "title.subheader": "其他",
+  "setting.clearData": "清除本地数据",
+  "setting.clearData.button.clearData": "清除本地数据",
+  "setting.clearData.description": "清除所有本地数据，包括书籍、书签和设置。",
+  "setting.clearData.message.cleared": "本地数据已清除。",
+  "setting.googleDrive.button.clearData": "清除 Google 云端硬盘同步数据",
+  "setting.googleDrive.clearData.description": "清除所有 Google Drive 同步数据，包括书籍、书签和设置。",
+  "setting.googleDrive.message.cleared": "Google 云端硬盘同步数据已清除。",
+  "setting.googleDrive.message.revoked": "Google 云端硬盘访问权限已撤销。"
 }

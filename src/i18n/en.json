@@ -47,6 +47,15 @@
 
   "setting.googleDrive": "Google Drive",
   "setting.googleDrive.description": "Google Drive settings",
-  "setting.googleDrive.button.revoke": "Revoke Google Drive Access"
+  "setting.googleDrive.button.revoke": "Revoke Google Drive Access",
+  "setting.googleDrive.message.revoked": "Google Drive access revoked.",
+  "setting.googleDrive.button.clearData": "Clear Google Drive Sync Data",
+  "setting.googleDrive.clearData.description": "Clear all Google Drive sync data, including books, bookmarks, and settings.",
+  "setting.googleDrive.message.cleared": "Google Drive sync data cleared.",
 
+  "setting.clearData": "Clear Local Data",
+  "setting.clearData.description": "Clear all local data, including books, bookmarks, and settings.",
+  "setting.clearData.button.clearData": "Clear Local Data",
+  "setting.clearData.message.cleared": "Local data cleared."
+  
 }

@@ -46,6 +46,15 @@ export default defineConfig({
   }],
   build: {
     // manifest: true
+
+    rollupOptions: {
+      input: {
+        main: new URL('./index.html', import.meta.url).pathname,
+        privacy: new URL('./privacy.html', import.meta.url).pathname,
+      }
+    }
+
+
   },
   server:{
     port:5174

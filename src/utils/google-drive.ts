@@ -54,7 +54,7 @@ async function updateFile (
   })
 }
 
-async function listFiles (pageSize = 20, q): Promise<Array<{
+async function listFiles (pageSize = 20, q: undefined | string): Promise<Array<{
   id: string
   name: string
 }>> {
@@ -187,6 +187,22 @@ async function tryCanWriteAndRead (
   } catch (error) {
     console.log(error)
     return false
+  }
+}
+
+export async function clearData (): Promise<void> {
+  await loadGapi()
+
+  while (true) {
+    const files = await listFiles(20, undefined)
+    if (files.length === 0) {
+      break
+    }
+    for (const file of files) {
+      await gapi.client.drive.files.delete({
+        fileId: file.id
+      })
+    }
   }
 }
 
