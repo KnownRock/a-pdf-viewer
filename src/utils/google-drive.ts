@@ -3,10 +3,10 @@ import type { SimpleFs } from '../types'
 
 const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
 const apiKey = import.meta.env.VITE_GOOGLE_API_KEY
-
+const clientSecret = import.meta.env.VITE_GOOGLE_CLIENT_SECRET
 const scope = 'https://www.googleapis.com/auth/drive.appdata'
 const discoveryDoc = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'
-
+const tokenEndpoint = 'https://www.googleapis.com/oauth2/v4/token'
 // https://qiita.com/kenken1981/items/b6cb3e536668a3cef520
 // dev env need use localhost instead of 127.0.0.1
 
@@ -54,7 +54,7 @@ async function updateFile (
   })
 }
 
-async function listFiles (pageSize = 20, q): Promise<Array<{
+async function listFiles (pageSize = 20, q: undefined | string): Promise<Array<{
   id: string
   name: string
 }>> {
@@ -190,6 +190,22 @@ async function tryCanWriteAndRead (
   }
 }
 
+export async function clearData (): Promise<void> {
+  await loadGapi()
+
+  while (true) {
+    const files = await listFiles(20, undefined)
+    if (files.length === 0) {
+      break
+    }
+    for (const file of files) {
+      await gapi.client.drive.files.delete({
+        fileId: file.id
+      })
+    }
+  }
+}
+
 let loadingPromise: Promise<void> | undefined
 async function loadGapi (): Promise<void> {
   if (loadingPromise !== undefined) {
@@ -214,7 +230,47 @@ async function loadGapi (): Promise<void> {
         })
       }
 
-      const accessToken = await get('app:googleDriveSimpleFsAccessToken')
+      async function refreshAccessToken (): Promise<boolean> {
+        const refreshToken = await get('app:googleDriveAuthRefreshToken')
+        if (refreshToken !== undefined) {
+          const tokenResponse = await fetch(tokenEndpoint, {
+            method: 'POST',
+            body: JSON.stringify({
+              refresh_token: refreshToken,
+              client_id: clientId,
+              client_secret: clientSecret,
+              grant_type: 'refresh_token'
+            })
+          }).then(async (resp) => {
+            return await resp.json()
+          }).catch((error) => {
+            console.log(error)
+            return undefined
+          })
+
+          if (tokenResponse !== undefined) {
+            const accessToken = tokenResponse.access_token
+            if (accessToken !== undefined) {
+              await set('app:googleDriveAuthAccessToken', accessToken)
+              gapi.client.setToken({ access_token: accessToken })
+              const canWriteAndRead = await tryCanWriteAndRead(accessToken)
+              if (canWriteAndRead) {
+                resolve()
+                return true
+              }
+            }
+          }
+
+          await set('app:googleDriveAuthAccessToken', undefined)
+          await set('app:googleDriveAuthRefreshToken', undefined)
+
+          return false
+        }
+
+        return false
+      }
+
+      const accessToken = await get('app:googleDriveAuthAccessToken')
       if (accessToken !== undefined) {
         gapi.client.setToken({ access_token: accessToken })
         const canWriteAndRead = await tryCanWriteAndRead(accessToken)
@@ -224,23 +280,57 @@ async function loadGapi (): Promise<void> {
         }
       }
 
-      const tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: clientId,
-        scope,
-        callback: (tokenResponse: google.accounts.oauth2.TokenResponse) => {
-          if (tokenResponse?.access_token !== undefined) {
-            if (google.accounts.oauth2.hasGrantedAllScopes(tokenResponse, scope)) {
-              console.log('tokenResponse', tokenResponse)
-              set('app:googleDriveSimpleFsAccessToken', tokenResponse.access_token)
-                .catch((error) => {
-                  console.log(error)
-                })
+      const isFreshed = await refreshAccessToken()
+      if (isFreshed) {
+        return
+      }
+
+      async function handleCodeResponse (response: google.accounts.oauth2.CodeResponse): Promise<void> {
+        const code = response.code
+        if (code !== undefined) {
+          await set('app:googleDriveAuthCode', code)
+          const tokenResponse = await fetch(tokenEndpoint, {
+            method: 'POST',
+            body: JSON.stringify({
+              code,
+              client_id: clientId,
+              client_secret: clientSecret,
+              redirect_uri: 'postmessage',
+              grant_type: 'authorization_code'
+            })
+          }).then(async (resp) => {
+            return await resp.json()
+          }).catch((error) => {
+            console.log(error)
+            return undefined
+          })
+
+          if (tokenResponse !== undefined) {
+            const refreshToken = tokenResponse.refresh_token
+            if (refreshToken !== undefined) {
+              await set('app:googleDriveAuthRefreshToken', refreshToken)
+            }
+            const accessToken = tokenResponse.access_token
+            if (accessToken !== undefined) {
+              await set('app:googleDriveAuthAccessToken', accessToken)
               gapi.client.setToken(tokenResponse)
               resolve()
             }
           }
+        }
 
-          reject(new Error('Failed to get access token'))
+        reject(new Error('Failed to get access token'))
+      }
+
+      const client = google.accounts.oauth2.initCodeClient({
+        client_id: clientId,
+        scope,
+        ux_mode: 'popup',
+        callback: (response) => {
+          handleCodeResponse(response).catch((error) => {
+            console.log(error)
+            reject(error)
+          })
         },
         error_callback: (error) => {
           console.log(error)
@@ -248,18 +338,12 @@ async function loadGapi (): Promise<void> {
         }
       })
 
-      const token = gapi.client.getToken()
-      console.log(token)
-
-      if (token === null) {
-        tokenClient.requestAccessToken({ prompt: 'consent' })
-      } else {
-        tokenClient.requestAccessToken({ prompt: '' })
-      }
+      client.requestCode()
     })
   })()
 
   await loadingPromise
+  loadingPromise = undefined
 }
 
 export async function revokeGoogleDrive (): Promise<void> {
@@ -270,7 +354,9 @@ export async function revokeGoogleDrive (): Promise<void> {
       google.accounts.oauth2.revoke(token.access_token, () => { resolve() })
     })
   }
-  await set('app:googleDriveSimpleFsAccessToken', undefined)
+
+  await set('app:googleDriveAuthAccessToken', undefined)
+  await set('app:googleDriveAuthRefreshToken', undefined)
 }
 
 export async function getGoogleDriveSimpleFs (): Promise<SimpleFs> {

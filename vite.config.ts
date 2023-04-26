@@ -26,12 +26,12 @@ export default defineConfig({
     name: 'my-plugin',
     closeBundle: {
       sequential: true,
-      async handler() {
+      handler() {
         // console.log('closeBundle')
         const files = readFiles('./dist')
         const revisionFiles = files
         .filter((file) => {
-          return !file.endsWith('.map') || file === '/sw.js'
+          return !file.endsWith('.map') || file === '/sw.js' || file === '/files.js'
         })
         .map((file) => {
           return {
@@ -46,6 +46,15 @@ export default defineConfig({
   }],
   build: {
     // manifest: true
+
+    rollupOptions: {
+      input: {
+        main: new URL('./index.html', import.meta.url).pathname,
+        privacy: new URL('./privacy.html', import.meta.url).pathname,
+      }
+    }
+
+
   },
   server:{
     port:5174

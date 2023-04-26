@@ -169,7 +169,7 @@
     canFreeMove = false
 
     if (touchStartX !== null && touchStartY !== null) {
-      if (Math.abs(e.changedTouches[0].clientX - touchStartX) < 10 && Math.abs(e.changedTouches[0].clientY - touchStartY) < 10) {
+      if (Math.abs(e.touches[0].clientX - touchStartX) < 10 && Math.abs(e.touches[0].clientY - touchStartY) < 10) {
         isNotClick = false
       }
     }
