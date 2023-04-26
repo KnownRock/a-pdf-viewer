@@ -1,47 +1,94 @@
-# Svelte + TS + Vite
+# A PDF Viewer
 
-This template should help get you started developing with Svelte and TypeScript in Vite.
+This is a PDF viewer built with Svelte and PDF.js.
 
 ## Recommended IDE Setup
 
 [VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode).
 
-## Need an official Svelte framework?
+### VS Code Recommand Setting
 
-Check out [SvelteKit](https://github.com/sveltejs/kit#readme), which is also powered by Vite. Deploy anywhere with its serverless-first approach and adapt to various platforms, with out of the box support for TypeScript, SCSS, and Less, and easily-added support for mdsvex, GraphQL, PostCSS, Tailwind CSS, and more.
+.vscode/extensions.json
 
-## Technical considerations
-
-**Why use this over SvelteKit?**
-
-- It brings its own routing solution which might not be preferable for some users.
-- It is first and foremost a framework that just happens to use Vite under the hood, not a Vite app.
-
-This template contains as little as possible to get started with Vite + TypeScript + Svelte, while taking into account the developer experience with regards to HMR and intellisense. It demonstrates capabilities on par with the other `create-vite` templates and is a good starting point for beginners dipping their toes into a Vite + Svelte project.
-
-Should you later need the extended capabilities and extensibility provided by SvelteKit, the template has been structured similarly to SvelteKit so that it is easy to migrate.
-
-**Why `global.d.ts` instead of `compilerOptions.types` inside `jsconfig.json` or `tsconfig.json`?**
-
-Setting `compilerOptions.types` shuts out all other types not explicitly listed in the configuration. Using triple-slash references keeps the default TypeScript setting of accepting type information from the entire workspace, while also adding `svelte` and `vite/client` type information.
-
-**Why include `.vscode/extensions.json`?**
-
-Other templates indirectly recommend extensions via the README, but this file allows VS Code to prompt the user to install the recommended extension upon opening the project.
-
-**Why enable `allowJs` in the TS template?**
-
-While `allowJs: false` would indeed prevent the use of `.js` files in the project, it does not prevent the use of JavaScript syntax in `.svelte` files. In addition, it would force `checkJs: false`, bringing the worst of both worlds: not being able to guarantee the entire codebase is TypeScript, and also having worse typechecking for the existing JavaScript. In addition, there are valid use cases in which a mixed codebase may be relevant.
-
-**Why is HMR not preserving my local component state?**
-
-HMR state preservation comes with a number of gotchas! It has been disabled by default in both `svelte-hmr` and `@sveltejs/vite-plugin-svelte` due to its often surprising behavior. You can read the details [here](https://github.com/rixo/svelte-hmr#svelte-hmr).
-
-If you have state that's important to retain within a component, consider creating an external store which would not be replaced by HMR.
-
-```ts
-// store.ts
-// An extremely simple external store
-import { writable } from 'svelte/store'
-export default writable(0)
+```json
+{
+  "recommendations": ["svelte.svelte-vscode"]
+}
 ```
+
+.vscode/settings.json
+
+```json
+{
+  "i18n-ally.localesPaths": [
+    "src/i18n"
+  ],
+  "eslint.validate": [
+    "svelte"
+  ],
+  "i18n-ally.keystyle": "flat",
+  "i18n-ally.sourceLanguage": "en"
+}
+```
+
+
+## Get started
+
+Install the dependencies...
+
+```bash
+npm install
+```
+
+Start [Vite](https://vitejs.dev/) in development mode:
+
+```bash
+npm run dev
+```
+
+Navigate to [localhost:5174](http://localhost:5174). You should see your app running.
+
+## Building and running in production mode
+
+To create an optimised version of the app:
+
+```bash
+npm run build
+```
+
+## Google API Setup
+
+See official docs [here](https://developers.google.com/drive/api/quickstart/js).
+
+
+## Setting up .env and .env.production
+
+Create a .env file in the root of the project and add the following:
+
+```bash
+VITE_GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY
+VITE_GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID
+VITE_GOOGLE_CLIENT_SECRET=YOUR_GOOGLE_CLIENT_SECRET
+VITE_SITE=http://localhost:5174
+```
+
+Create a .env.production file in the root of the project and add the following:
+
+```bash
+VITE_GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY
+VITE_GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID
+VITE_GOOGLE_CLIENT_SECRET=YOUR_GOOGLE_CLIENT_SECRET
+VITE_SITE=YOURSITE.com
+```
+
+
+## Deploying to the web
+
+### Deploying to Cloudflare Pages
+
+[Cloudflare Pages](https://pages.cloudflare.com/) is a great way to deploy your Svelte app to the web for free.
+
+1. Create a new project on Cloudflare Pages.
+2. Connect your GitHub account.
+3. Select your repository.
+
