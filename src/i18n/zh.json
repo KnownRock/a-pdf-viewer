@@ -50,5 +50,7 @@
   "setting.googleDrive.button.clearData": "清除 Google 云端硬盘同步数据",
   "setting.googleDrive.clearData.description": "清除所有 Google Drive 同步数据，包括书籍、书签和设置。",
   "setting.googleDrive.message.cleared": "Google 云端硬盘同步数据已清除。",
-  "setting.googleDrive.message.revoked": "Google 云端硬盘访问权限已撤销。"
+  "setting.googleDrive.message.revoked": "Google 云端硬盘访问权限已撤销。",
+  "setting.privacy": "隐私",
+  "setting.privacy.link": "隐私政策"
 }

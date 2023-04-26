@@ -62,6 +62,10 @@
     </Button>
   </div>
 
+  <!-- privacy -->
+  <h2>{$t('setting.privacy')}</h2>
+  <a href="/privacy.html" target="_blank">{$t('setting.privacy.link')}</a>
+
 
   
 

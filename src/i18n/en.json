@@ -56,6 +56,9 @@
   "setting.clearData": "Clear Local Data",
   "setting.clearData.description": "Clear all local data, including books, bookmarks, and settings.",
   "setting.clearData.button.clearData": "Clear Local Data",
-  "setting.clearData.message.cleared": "Local data cleared."
+  "setting.clearData.message.cleared": "Local data cleared.",
+
+  "setting.privacy": "Privacy",
+  "setting.privacy.link": "Privacy Policy"
   
 }
