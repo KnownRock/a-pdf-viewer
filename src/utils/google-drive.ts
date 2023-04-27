@@ -291,21 +291,36 @@ async function loadGapi (): Promise<void> {
         if (code !== undefined) {
           await set('app:googleDriveAuthCode', code)
 
-          const tokenResponse = await fetch(tokenEndpoint, {
-            method: 'POST',
-            body: JSON.stringify({
-              code,
-              client_id: clientId,
-              client_secret: clientSecret,
-              redirect_uri: 'postmessage',
-              grant_type: 'authorization_code'
+          let tokenResponse
+          for (let retry = 0; retry < 3; retry++) {
+            await new Promise<void>((resolve) => {
+              setTimeout(() => {
+                resolve()
+              }, 500)
             })
-          }).then(async (resp) => {
-            return await resp.json()
-          }).catch((error) => {
-            console.log(error)
-            return undefined
-          })
+
+            tokenResponse = await fetch(tokenEndpoint, {
+              method: 'POST',
+              body: JSON.stringify({
+                code,
+                // [redirect_uri, client_secret, client_id] no effect for cloudflare workers
+                client_id: clientId,
+                client_secret: clientSecret,
+                redirect_uri: 'postmessage',
+
+                grant_type: 'authorization_code'
+              })
+            }).then(async (resp) => {
+              return await resp.json()
+            }).catch((error) => {
+              console.log(error)
+              return undefined
+            })
+
+            if (tokenResponse !== undefined) {
+              break
+            }
+          }
 
           if (tokenResponse !== undefined) {
             const refreshToken = tokenResponse.refresh_token
