@@ -26,7 +26,6 @@
   "drawer.setting": "Settings",
   "permission.dialog.title": "Permission",
   "book.title": "Title",
-
   "title.home": "Home",
   "title.bookmark": "Bookmark",
   "title.new": "New",
@@ -36,15 +35,11 @@
   "title.subheader": "Other",
   "title.setting": "Settings",
   "title.notFound": "Not Found",
-
-
   "notFound.title": "Not Found",
   "notFound.message": "Sorry, the page you are looking for does not exist.",
   "notFound.button": "Back to Home",
-
   "books.noBooks": "No books",
   "books.addBooks": "Add Books",
-
   "setting.googleDrive": "Google Drive",
   "setting.googleDrive.description": "Google Drive settings",
   "setting.googleDrive.button.revoke": "Revoke Google Drive Access",
@@ -52,15 +47,15 @@
   "setting.googleDrive.button.clearData": "Clear Google Drive Sync Data",
   "setting.googleDrive.clearData.description": "Clear all Google Drive sync data, including books, bookmarks, and settings.",
   "setting.googleDrive.message.cleared": "Google Drive sync data cleared.",
-
   "setting.clearData": "Clear Local Data",
   "setting.clearData.description": "Clear all local data, including books, bookmarks, and settings.",
   "setting.clearData.button.clearData": "Clear Local Data",
   "setting.clearData.message.cleared": "Local data cleared.",
-
   "setting.privacy": "Privacy",
   "setting.privacy.link": "Privacy Policy",
-
-  "tooltip.sync": "Using Google Drive to sync data"
-  
+  "tooltip.sync": "Using Google Drive to sync data",
+  "viewer.bookNotFound": "Book Not Found",
+  "viewer.backToHome": "Back To Home",
+  "message.sw.update-available": "A new version is available.",
+  "message.sw.update": "Update"
 }

@@ -1,14 +1,10 @@
 <script lang="ts">
-  import { createEventDispatcher, onMount } from 'svelte'
-
+  import { onMount } from 'svelte'
 
   import * as pdfjsLib from 'pdfjs-dist'
-  // import { Icon } from '@smui/button'
   pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf/pdf.worker.js'
   export let scale = 1.0
   export let outputScale = window.devicePixelRatio || 1
-  
-  const dispatch = createEventDispatcher()
   
   export let pdf: pdfjsLib.PDFDocumentProxy
   export let pageIndex: number
@@ -72,15 +68,6 @@
       viewport
     }
 
-    // if (renderTask) {
-    //   try {
-    //     renderTask.cancel()
-    //     console.log('cancel')
-    //   } catch (error) {
-
-    //   }
-    // }
-
     try {
       renderTask = page.render(renderContext)
       await renderTask.promise
@@ -103,9 +90,7 @@
         render(pageIndex)
       }
     } catch (error) {
-      // console.log(error)
     }
-    // }
   }
 
 
@@ -115,81 +100,29 @@
     render(pageIndex)
   })
 
-  function stopPropagation (e: Event) {
-    e.stopPropagation()
-  }
 
   // TODO: two page mode
   // TODO: cache unzoomed page to scale and replace canvas when render ready
 </script>
 
-<div class="page">
-  <!-- svelte-ignore a11y-click-events-have-key-events -->
-  <div class="contorl contorl-left" on:click={ (e) => {
-    dispatch('prev')
-    stopPropagation(e)
-  }}>
-    <!-- <Icon class="material-icons">arrow_back_ios</Icon> -->
-  </div>
-  <div 
-    class="page-canvas-container"
-    style={
-    `transform: translateX(${offsetX}px);width:${width}px;height:${height}px;`
-    }>
-    <canvas 
-      class={renderId % 2 === 0 ? 'page-canvas' : 'page-canvas page-canvas-pre-render'}
-      bind:this={canvas1}  width="600" height="400" />
-    <canvas 
-      class={renderId % 2 === 0 ? 'page-canvas page-canvas-pre-render' : 'page-canvas'}
-      bind:this={canvas2} width="600" height="400" />
-  </div>
-  
-  <!-- svelte-ignore a11y-click-events-have-key-events -->
-  <div class="contorl contorl-right" on:click={ (e) => {
-    dispatch('next')
-    stopPropagation(e)
-  }}>
-    <!-- <Icon class="material-icons">arrow_forward_ios</Icon> -->
-  </div>
+
+<div 
+  class="page-canvas-container"
+  style={
+  `transform: translateX(${offsetX}px);width:${width}px;height:${height}px;`
+  }>
+  <canvas 
+    class={renderId % 2 === 0 ? 'page-canvas' : 'page-canvas page-canvas-pre-render'}
+    bind:this={canvas1}  width="600" height="400" />
+  <canvas 
+    class={renderId % 2 === 0 ? 'page-canvas page-canvas-pre-render' : 'page-canvas'}
+    bind:this={canvas2} width="600" height="400" />
 </div>
 
+
+
+
 <style>
-  .page {
-    height: 100%;
-    /* width: 100%; */
-    width: 100vw;
-    overflow: hidden;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    user-select: none;
-  }
-
-  
-  .contorl {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    font-size: 20px;
-    cursor: pointer;
-    z-index: 1;
-  }
-
-  .contorl-left {
-    left: 0;
-  }
-
-  .contorl-right {
-    right: 0;
-  }
-
   .page-canvas{
     grid-row-start: 1;
     grid-row-end: 1;

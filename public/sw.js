@@ -10,3 +10,8 @@ const navigationRoute = new workbox.routing.NavigationRoute(handler, {
 })
 
 workbox.routing.registerRoute(navigationRoute)
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting()
+  }
+})

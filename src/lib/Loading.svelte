@@ -5,7 +5,7 @@
   import { onMount } from 'svelte'
 
   export let isStaticallyLoading = false
-  export let message : undefined | string
+  export let message : undefined | string = ''
 
   let isShow = false
   onMount(() => {
@@ -31,7 +31,7 @@
     <div style="
     display: flex; justify-content: center; align-items: center; height: 100px;
     ">
-      {#if message !== undefined}
+      {#if message !== undefined && message !== ''}
         <div style="margin-right: 1em;">
           {message}
         </div>

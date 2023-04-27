@@ -3,10 +3,15 @@ import type { MessageType } from '../types'
 
 export async function message (
   message: string,
-  type: MessageType
+  type: MessageType,
+  buttons?: Array<{
+    text: string
+    action: () => Promise<void> | void
+  }>
 ): Promise<void> {
   store.set({
     message,
-    type
+    type,
+    buttons
   })
 }
