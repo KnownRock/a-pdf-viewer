@@ -2,9 +2,9 @@ const tokenEndpoint = 'https://www.googleapis.com/oauth2/v4/token'
 
 export default {
   async fetch (request, env) {
-    if (request.method !== 'POST') {
-      return new Response('Method not allowed', { status: 405 })
-    }
+    // if (request.method !== 'POST') {
+    //   return new Response('Method not allowed', { status: 405 })
+    // }
 
     const json = await request.json()
 
