@@ -6,10 +6,12 @@ export default {
       return new Response('Method not allowed', { status: 405 })
     }
 
+    const json = await request.json()
+
     try {
       const { CLIENT_ID: clientId, CLIENT_SECRET: clientSecret } = env
 
-      const { grant_type: grantType } = await request.json()
+      const { grant_type: grantType } = json
 
       if (!clientId || !clientSecret) {
         return new Response('Missing client credentials', { status: 500 })
@@ -22,7 +24,7 @@ export default {
       if (grantType === 'refresh_token') {
         console.log('Refreshing token...')
 
-        const { refresh_token: refreshToken } = await request.json()
+        const { refresh_token: refreshToken } = json
 
         return await fetch(tokenEndpoint, {
           method: 'POST',
@@ -38,7 +40,7 @@ export default {
       if (grantType === 'authorization_code') {
         console.log('Exchanging code for token...')
 
-        const { code, redirect_uri: redirectUri, grant_type: grantType } = await request.json()
+        const { code, grant_type: grantType } = json
 
         return await fetch(tokenEndpoint, {
           method: 'POST',
@@ -46,8 +48,7 @@ export default {
             code,
             client_id: clientId,
             client_secret: clientSecret,
-            // redirect_uri: redirectUri,
-            offline_access: true,
+            redirect_uri: 'postmessage',
             grant_type: grantType
           })
         })
