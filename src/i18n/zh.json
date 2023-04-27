@@ -53,5 +53,7 @@
   "setting.googleDrive.message.revoked": "Google 云端硬盘访问权限已撤销。",
   "setting.privacy": "隐私",
   "setting.privacy.link": "隐私政策",
-  "tooltip.sync": "使用 Google 云端硬盘同步数据"
+  "tooltip.sync": "使用 Google 云端硬盘同步数据",
+  "viewer.backToHome": "回到主页",
+  "viewer.bookNotFound": "找不到书"
 }

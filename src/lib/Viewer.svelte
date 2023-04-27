@@ -14,6 +14,8 @@
   pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf/pdf.worker.js'
   import { pinch } from 'svelte-gestures'
   import { throttle } from '../utils/helper'
+  import Button from '@smui/button/src/Button.svelte'
+  import PrevNextButton from './Viewer/PrevNextButton.svelte'
 
   export let simpleFs: SimpleFs | null
   export let bookId: string | null = null
@@ -367,6 +369,7 @@
   {:else}
     <div id="pdf-viewer">
       <VirtualList
+        
         height={height}
         width="auto"
         itemCount={pdf.numPages}
@@ -454,16 +457,38 @@
           </div>
         </div>
       {/if}
+
+      <PrevNextButton
+        prev={() => {
+          scrollOffset -= pdfPageHeight
+          saveScrollOffset()
+        }}
+        next={() => {
+          scrollOffset += pdfPageHeight
+          saveScrollOffset()
+        }}
+      />
+
     </div>
   {/if}
 </div>
 {:else}
-  <div>
-    {$t('book_not_found')}
+  <div class="not-found">
+    <h1>{$t('viewer.bookNotFound')}</h1>
+    <Button href="/">{$t('viewer.backToHome')}</Button>
   </div>
 {/if}
 
 <style>
+  .not-found {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    height: 100vh;
+  }
+
+
   .viewer {
     position: absolute;
     /* background-color: #0f0; */
@@ -482,6 +507,10 @@
     display: flex;
     justify-content: center;
   }
+
+
+
+
   .menu {
     position: absolute;
     
@@ -491,6 +520,7 @@
     
     height: 50px;
     
+    z-index: 2;
   }
 
   .bottom {
