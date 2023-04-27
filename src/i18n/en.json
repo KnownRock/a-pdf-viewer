@@ -59,6 +59,8 @@
   "setting.clearData.message.cleared": "Local data cleared.",
 
   "setting.privacy": "Privacy",
-  "setting.privacy.link": "Privacy Policy"
+  "setting.privacy.link": "Privacy Policy",
+
+  "tooltip.sync": "Using Google Drive to sync data"
   
 }
