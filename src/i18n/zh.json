@@ -55,5 +55,7 @@
   "setting.privacy.link": "隐私政策",
   "tooltip.sync": "使用 Google 云端硬盘同步数据",
   "viewer.backToHome": "回到主页",
-  "viewer.bookNotFound": "找不到书"
+  "viewer.bookNotFound": "找不到书",
+  "message.sw.update": "更新",
+  "message.sw.update-available": "有新版本可用。"
 }

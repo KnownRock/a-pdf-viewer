@@ -71,6 +71,7 @@
     "pdfjs-dist": "^3.5.141",
     "svelte-gestures": "^1.4.1",
     "svelte-routing": "^1.6.0",
-    "uuid": "^9.0.0"
+    "uuid": "^9.0.0",
+    "workbox-window": "^6.5.4"
   }
 }

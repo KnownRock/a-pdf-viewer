@@ -55,5 +55,7 @@
   "setting.privacy.link": "Privacy Policy",
   "tooltip.sync": "Using Google Drive to sync data",
   "viewer.bookNotFound": "Book Not Found",
-  "viewer.backToHome": "Back To Home"
+  "viewer.backToHome": "Back To Home",
+  "message.sw.update-available": "A new version is available.",
+  "message.sw.update": "Update"
 }
