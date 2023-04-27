@@ -6,7 +6,8 @@ const apiKey = import.meta.env.VITE_GOOGLE_API_KEY
 const clientSecret = import.meta.env.VITE_GOOGLE_CLIENT_SECRET
 const scope = 'https://www.googleapis.com/auth/drive.appdata'
 const discoveryDoc = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'
-const tokenEndpoint = 'https://www.googleapis.com/oauth2/v4/token'
+const tokenEndpoint = import.meta.env.VITE_GOOGLE_TOKEN_ENDPOINT ??
+  'https://www.googleapis.com/oauth2/v4/token'
 // https://qiita.com/kenken1981/items/b6cb3e536668a3cef520
 // dev env need use localhost instead of 127.0.0.1
 
@@ -289,21 +290,37 @@ async function loadGapi (): Promise<void> {
         const code = response.code
         if (code !== undefined) {
           await set('app:googleDriveAuthCode', code)
-          const tokenResponse = await fetch(tokenEndpoint, {
-            method: 'POST',
-            body: JSON.stringify({
-              code,
-              client_id: clientId,
-              client_secret: clientSecret,
-              redirect_uri: 'postmessage',
-              grant_type: 'authorization_code'
+
+          let tokenResponse
+          for (let retry = 0; retry < 3; retry++) {
+            await new Promise<void>((resolve) => {
+              setTimeout(() => {
+                resolve()
+              }, 500)
             })
-          }).then(async (resp) => {
-            return await resp.json()
-          }).catch((error) => {
-            console.log(error)
-            return undefined
-          })
+
+            tokenResponse = await fetch(tokenEndpoint, {
+              method: 'POST',
+              body: JSON.stringify({
+                code,
+                // [redirect_uri, client_secret, client_id] no effect for cloudflare workers
+                client_id: clientId,
+                client_secret: clientSecret,
+                redirect_uri: 'postmessage',
+
+                grant_type: 'authorization_code'
+              })
+            }).then(async (resp) => {
+              return await resp.json()
+            }).catch((error) => {
+              console.log(error)
+              return undefined
+            })
+
+            if (tokenResponse !== undefined) {
+              break
+            }
+          }
 
           if (tokenResponse !== undefined) {
             const refreshToken = tokenResponse.refresh_token
