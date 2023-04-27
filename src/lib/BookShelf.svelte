@@ -6,6 +6,7 @@
   import { navigate, Router, Route } from 'svelte-routing'
   import { t } from 'svelte-i18n'
   import TopAppBar, { Row, Section, Title } from '@smui/top-app-bar'
+  import Tooltip, { Wrapper } from '@smui/tooltip'
   import IconButton from '@smui/icon-button'
   import { state } from '../store'
   import { addBook } from '../store/state'
@@ -179,13 +180,18 @@
           </Section>
           <Section align="end" toolbar>
             <!-- sync -->
-            <IconButton class="material-icons"
-              on:click={() => {
-                handleSync()
-              }}
-            >
-              sync
-            </IconButton>
+            <Wrapper>
+              <IconButton class="material-icons"
+                on:click={() => {
+                  handleSync()
+                }}
+              >
+                sync
+              </IconButton>
+
+              <Tooltip unbounded>{$t('tooltip.sync')}</Tooltip>
+            </Wrapper>
+         
 
             <!-- add book --> 
             <IconButton class="material-icons"
