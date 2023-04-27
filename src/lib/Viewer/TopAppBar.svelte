@@ -2,6 +2,7 @@
   import TopAppBar, { Row, Section, Title } from '@smui/top-app-bar'
   import IconButton from '@smui/icon-button'
   import { navigate } from 'svelte-routing'
+  import type { Book } from '../../types'
 
   export let book: Book
   export let scaleUp: () => void
