@@ -7,13 +7,11 @@
   import type { PDFDocumentProxy } from 'pdfjs-dist'
   import { updateBookProgress, updateBookState } from '../store/state'
   import Slider from '@smui/slider'
-  
+  import TopAppBar from './Viewer/TopAppBar.svelte'
+  import { t } from 'svelte-i18n'
   import VirtualList from 'svelte-tiny-virtual-list'
   import * as pdfjsLib from 'pdfjs-dist'
-  import TopAppBar, { Row, Section, Title } from '@smui/top-app-bar'
-  import IconButton from '@smui/icon-button'
   pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf/pdf.worker.js'
-  import { navigate } from 'svelte-routing'
   import { pinch } from 'svelte-gestures'
   import { throttle } from '../utils/helper'
 
@@ -26,6 +24,7 @@
   // TODO: fix first page slow render issue
   let inited = false
 
+  // set progress by scroll offset
   async function saveScrollOffset () {
     if (bookId) {
       const pageIndex = Math.floor(scrollOffset / pdfPageHeight) + 1
@@ -39,6 +38,7 @@
     }
   }
 
+  // handle scroll offset when scroll by user
   async function handleScrollByUser () {
     await saveScrollOffset()
   }
@@ -143,9 +143,6 @@
 
     touchStartY = event.touches[0].clientY
     touchStartX = event.touches[0].clientX
-
-    // event.preventDefault()
-    // event.stopPropagation()
   }
 
   function handleMouseUp (event: MouseEvent) {
@@ -176,9 +173,6 @@
   
     oldTouchX = null
     oldTouchY = null
-
-    // e.preventDefault()
-    // e.stopPropagation()
   }
 
   let progress = 1
@@ -205,7 +199,6 @@
         oldTouchY = event.touches[0].clientY
       }
 
-      // console.log(event.touches[0].clientX - oldTouchX)
       if (
         !canFreeMove &&
         Math.abs(event.touches[0].clientX - oldTouchX) < 100) {
@@ -218,16 +211,7 @@
         oldTouchX = event.touches[0].clientX
       }
 
-  
-      // scrollOffset -= event.touches[0].clientY - oldTouchY
-  
-  
-      // oldTouchY = event.touches[0].clientY
-
       isNotClick = true
-
-      // event.preventDefault()
-      // event.stopPropagation()
     }
   }
 
@@ -302,15 +286,6 @@
     isMenuShown = !isMenuShown
   }
 
-
-  // $: progress && (async () => {
-  //   scrollOffset = (progress - 1) * pdfPageHeight +
-  //     // prevent scale change issue
-  //     (await get(`${bookId}-offset-y`) % pdfPageHeight) ??
-  //     0
-  //   await saveScrollOffset()
-  // })()
-
   async function setScrollOffsetByProgress () {
     scrollToBehaviour = 'instant'
     setTimeout(async () => {
@@ -331,15 +306,6 @@
   }
 
   async function getBookBuffer (bookId) : Promise<ArrayBuffer> {
-    // const booksFolderHandle = await resourceDir.getDirectoryHandle('books', {
-    //   create: true
-    // })
-    // const fileHandle = await booksFolderHandle.getFileHandle(`${bookId}.pdf`, {
-    //   create: true
-    // })
-    // const file = await fileHandle.getFile()
-    // const buffer = await file.arrayBuffer()
-
     if (simpleFs === null) {
       throw new Error('simpleFs is null')
     }
@@ -374,9 +340,6 @@
     URL.revokeObjectURL(url)
   }
 
-  // const scrollToBehaviour = 'auto' as 'smooth' | 'auto'
-  // on:afterScroll use smooth to ignore saveScrollOffset
-  
 </script>
 
 {#if book}
@@ -403,121 +366,57 @@
     <div>loading...</div>
   {:else}
     <div id="pdf-viewer">
-        <VirtualList
-          height={height}
-          width="auto"
-          itemCount={pdf.numPages}
-          itemSize={pdfPageHeight}
-          
-          getKey={index => index}
-          scrollToBehaviour={scrollToBehaviour}
-          scrollOffset={scrollOffset}
-          overscanCount={inited ? 1 : 0}
+      <VirtualList
+        height={height}
+        width="auto"
+        itemCount={pdf.numPages}
+        itemSize={pdfPageHeight}
+        
+        getKey={index => index}
+        scrollToBehaviour={scrollToBehaviour}
+        scrollOffset={scrollOffset}
+        overscanCount={inited ? 1 : 0}
 
-          on:afterScroll={async (event) => {
-            scrollOffset = event.detail.offset
-          }}
-        >
-          <div slot="item" let:index let:style {style} class="page">
-            {#if inited}
-            <Page 
-              on:prev={() => {
-                console.log('prev', index)
-                console.log('prev', scrollOffset)
+        on:afterScroll={async (event) => {
+          scrollOffset = event.detail.offset
+        }}
+      >
+        <div slot="item" let:index let:style {style} class="page">
+          {#if inited}
+          <Page 
+            on:prev={() => {
+              console.log('prev', index)
+              console.log('prev', scrollOffset)
 
-                scrollOffset -= pdfPageHeight
-                saveScrollOffset()
-              }}
-              on:next={() => {
-                console.log('next', index)
-                console.log('next', scrollOffset)
+              scrollOffset -= pdfPageHeight
+              saveScrollOffset()
+            }}
+            on:next={() => {
+              console.log('next', index)
+              console.log('next', scrollOffset)
 
-                scrollOffset += pdfPageHeight
-                saveScrollOffset()
-              }}
-              {offsetX}
-              {scale} {pdf} pageIndex={index + 1} bind:height={pdfPageHeight} />
-            {/if}
-          </div>
-          
-        </VirtualList>
+              scrollOffset += pdfPageHeight
+              saveScrollOffset()
+            }}
+            {offsetX}
+            {scale} {pdf} pageIndex={index + 1} bind:height={pdfPageHeight} />
+          {/if}
+        </div>
+        
+      </VirtualList>
 
 
       {#if isMenuShown}
         <div class="menu top" on:click={e => { e.stopPropagation() }}> 
-          <TopAppBar
-            prominent
-            variant="static"
-            dense
-          >
-            <Row>
-              <Section>
-
-
-                
-                <IconButton class="material-icons" aria-label="Back"
-                  on:click={() => {
-                    navigate('/')
-                  }}
-                  >arrow_back</IconButton
-                >
-                <!-- <IconButton class="material-icons">menu</IconButton> -->
-                <Title>
-                  {book.title}
-                </Title>
-              </Section>
-              <Section align="end" toolbar>
-                <!-- back -->
-
-                <!-- scaleUp -->
-                <IconButton class="material-icons" aria-label="Scale up"
-                  on:click={() => {
-                    scaleUp()
-                  }}
-                >
-                  zoom_in
-                </IconButton>
-
-                <!-- scaleDown -->
-                <IconButton class="material-icons" aria-label="Scale down"
-                  on:click={() => {
-                    scaleDown()
-                  }}
-                >
-                  zoom_out
-                </IconButton>
-
-                <!-- reset -->
-                <IconButton class="material-icons" aria-label="Reset"
-                  on:click={() => {
-                    resetScaleAndOffset()
-                  }}
-                >
-                  settings_backup_restore
-                </IconButton>
-                
-
-                <IconButton class="material-icons" aria-label="Download"
-                  on:click={downloadBook}
-                  >file_download</IconButton
-                >
-                <IconButton class="material-icons" aria-label="Print this page"
-                  on:click={printBook}
-                  >print</IconButton
-                >
-                <IconButton class="material-icons" aria-label="Bookmark this page"
-                  on:click={() => {
-                    if (book) {
-                      updateBookState(book.id, book?.state === 'bookmark' ? 'reading' : 'bookmark')
-                    }
-                  }}
-                  >{
-                  book?.state === 'bookmark' ? 'bookmark' : 'bookmark_border'
-                  }</IconButton
-                >
-              </Section>
-            </Row>
-          </TopAppBar>
+          <TopAppBar 
+            book={book} 
+            scaleUp={scaleUp} 
+            scaleDown={scaleDown}
+            resetScaleAndOffset={resetScaleAndOffset}
+            downloadBook={downloadBook}
+            printBook={printBook}
+            updateBookState={updateBookState}
+          />
         </div>
 
         <div class="menu bottom" on:click={e => { e.stopPropagation() }}>
@@ -556,21 +455,12 @@
         </div>
       {/if}
     </div>
-
-    <!-- <div class="page-controls">
-      <div>
-        1
-      </div>
-      <div>
-        2
-      </div>
-    </div> -->
   {/if}
-  
-
 </div>
 {:else}
-  <div>no book</div>
+  <div>
+    {$t('book_not_found')}
+  </div>
 {/if}
 
 <style>
