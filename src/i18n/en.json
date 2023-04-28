@@ -57,5 +57,9 @@
   "viewer.bookNotFound": "Book Not Found",
   "viewer.backToHome": "Back To Home",
   "message.sw.update-available": "A new version is available.",
-  "message.sw.update": "Update"
+  "message.sw.update": "Update",
+  "setting.default.direction.vertical": "Vertical",
+  "setting.default.direction.horizontal": "Horizontal",
+  "setting.default": "Default Settings",
+  "setting.default.direction.label": "Direction"
 }
