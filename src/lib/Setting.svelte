@@ -4,6 +4,21 @@
   import { message } from '../utils/message'
   import { revokeGoogleDrive, clearData } from '../utils/google-drive'
   import { state } from '../store'
+  import Select, { Option } from '@smui/select'
+  import { onMount } from 'svelte'
+  import { get, set } from 'idb-keyval'
+
+  let defaultDirection = 'vertical'
+
+  let inited = false
+  onMount(async () => {
+    defaultDirection = (await get('app:defaultDirection')) || 'vertical'
+    inited = true
+  })
+
+  $: if (inited) {
+    set('app:defaultDirection', defaultDirection)
+  }
 
 </script>
 
@@ -11,6 +26,20 @@
 <div class="container">
   <h1>{$t('setting.title')}</h1>
   <!-- <p>{$t('setting.description')}</p> -->
+
+  <h2>{$t('setting.default')}</h2>
+  <!-- <p>{$t('setting.default.description')}</p> -->
+  <div>
+    <!-- direction -->
+    <Select 
+      label={$t('setting.default.direction.label')}
+      bind:value={defaultDirection}
+       >
+      <Option value="vertical">{$t('setting.default.direction.vertical')}</Option>
+      <Option value="horizontal">{$t('setting.default.direction.horizontal')}</Option>
+    </Select>
+
+  </div>
 
   <h2>{$t('setting.googleDrive')}</h2>
   <!-- <p>{$t('setting.googleDrive.description')}</p> -->

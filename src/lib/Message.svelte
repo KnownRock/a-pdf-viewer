@@ -8,8 +8,8 @@
   import { t } from 'svelte-i18n'
   let snackbar: Snackbar
   let type = null as string | null
+  let presist = false
   let messageText = null as string | null
-  const timeoutMs = -1
   let buttons = null as {
     text: string
     action: () => void | Promise<void>
@@ -22,7 +22,13 @@
     }
 
     if (value.message !== null) {
-      type = value.type
+      const [typeSymbol, presistSymbol] = value.type?.split('-') || ['info']
+      if (presistSymbol === 'presist') {
+        presist = true
+      } else {
+        presist = false
+      }
+      type = typeSymbol
       messageText = value.message
       buttons = value.buttons
       snackbar.open()
@@ -37,7 +43,7 @@
 
 
 
-<Snackbar bind:this={snackbar} class={`demo-${type}`} {timeoutMs}>
+<Snackbar bind:this={snackbar} class={`demo-${type}`} timeoutMs={presist ? -1 : 5000}>
   <Label>
     {$t(messageText || '')}
   </Label>

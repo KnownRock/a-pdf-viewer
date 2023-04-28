@@ -57,5 +57,9 @@
   "viewer.backToHome": "回到主页",
   "viewer.bookNotFound": "找不到书",
   "message.sw.update": "更新",
-  "message.sw.update-available": "有新版本可用。"
+  "message.sw.update-available": "有新版本可用。",
+  "setting.default.direction.vertical": "垂直",
+  "setting.default.direction.horizontal": "水平",
+  "setting.default": "默认设置",
+  "setting.default.direction.label": "方向"
 }

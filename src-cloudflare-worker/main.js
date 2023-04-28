@@ -1,5 +1,21 @@
 const tokenEndpoint = 'https://www.googleapis.com/oauth2/v4/token'
 
+function getNewResponse (response, env) {
+  const { ORIGIN: origin } = env
+
+  const responseHeaders = new Headers(response.headers)
+  responseHeaders.set('Access-Control-Allow-Origin', origin)
+  // response.headers.set('Access-Control-Allow-Origin', '*')
+  const newResponse = new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: responseHeaders
+  })
+
+  return newResponse
+}
+
+
 export default {
   async fetch (request, env) {
     // if (request.method !== 'POST') {
@@ -26,7 +42,7 @@ export default {
 
         const { refresh_token: refreshToken } = json
 
-        return await fetch(tokenEndpoint, {
+        const response = await fetch(tokenEndpoint, {
           method: 'POST',
           body: JSON.stringify({
             refresh_token: refreshToken,
@@ -35,6 +51,7 @@ export default {
             grant_type: grantType
           })
         })
+        return getNewResponse(response, env)
       }
 
       if (grantType === 'authorization_code') {
@@ -42,7 +59,7 @@ export default {
 
         const { code, grant_type: grantType } = json
 
-        return await fetch(tokenEndpoint, {
+        const response = await fetch(tokenEndpoint, {
           method: 'POST',
           body: JSON.stringify({
             code,
@@ -52,6 +69,8 @@ export default {
             grant_type: grantType
           })
         })
+
+        return getNewResponse(response, env)
       }
 
 

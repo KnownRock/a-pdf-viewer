@@ -8,8 +8,12 @@
   
   export let pdf: pdfjsLib.PDFDocumentProxy
   export let pageIndex: number
-  export let height: number
+  export let size : {
+    width: number
+    height: number
+  }
   let width: number = 0
+  let height: number = 0
   let canvas1: HTMLCanvasElement
   let canvas2: HTMLCanvasElement
 
@@ -19,6 +23,7 @@
   let renderContext
 
   export let offsetX = 0
+  export let offsetY = 0
 
   let renderId = 0
   let renderTask: pdfjsLib.RenderTask | null = null
@@ -52,6 +57,10 @@
     preRenderCanvas.style.height = Math.floor(viewport.height) + 'px'
     width = viewport.width
     height = viewport.height
+    size = {
+      width: viewport.width,
+      height: viewport.height
+    }
 
     if (renderTask !== null) {
       needNextRender = true
@@ -109,7 +118,7 @@
 <div 
   class="page-canvas-container"
   style={
-  `transform: translateX(${offsetX}px);width:${width}px;height:${height}px;`
+  `transform: translate(${offsetX}px, ${offsetY}px);width:${width}px;height:${height}px;`
   }>
   <canvas 
     class={renderId % 2 === 0 ? 'page-canvas' : 'page-canvas page-canvas-pre-render'}

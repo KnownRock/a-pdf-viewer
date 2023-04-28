@@ -1,8 +1,9 @@
 import { writable } from 'svelte/store'
+import type { MessageType } from '../types'
 
 const store = writable<{
   message: string | null
-  type: 'success' | 'warning' | 'error' | 'info' | null
+  type: MessageType | null
 
   buttons?: Array<{
     text: string

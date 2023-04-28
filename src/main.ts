@@ -21,7 +21,7 @@ if (import.meta.env.PROD) {
       const messageText = 'message.sw.update-available'
       const buttonText = 'message.sw.update'
 
-      await message(messageText, 'info', [{
+      await message(messageText, 'success-presist', [{
         text: buttonText,
         action: async () => {
           await wb.messageSW({ type: 'SKIP_WAITING' })
