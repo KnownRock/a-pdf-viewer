@@ -22,21 +22,24 @@
   let book: Book | null = null
   let scrollToBehaviour = 'instant' as 'smooth' | 'auto' | 'instant'
   let pdf: PDFDocumentProxy | null = null
-  let pdfPageHeight: number = 0
+
+  let mode:'vertical' | 'horizontal' = 'horizontal'
+  // let pdfPageHeight: number = 0
+  let pdfPageSize: { width: number, height: number } = { width: 0, height: 0 }
   // TODO: fix first page slow render issue
   let inited = false
 
   // set progress by scroll offset
   async function saveScrollOffset () {
     if (bookId) {
-      const pageIndex = Math.floor(scrollOffset / pdfPageHeight) + 1
+      const pageIndex = Math.floor(scrollOffset / getOnePageOffset()) + 1
       if (pageIndex !== progress) {
-        progress = pageIndex
+        progress = Math.max(1, pageIndex)
         console.log('update progress', pageIndex)
         updateBookProgress(bookId, pageIndex)
       }
 
-      await set(`${bookId}-offset-y`, scrollOffset - (pageIndex - 1) * pdfPageHeight)
+      // await set(`${bookId}-offset-y`, scrollOffset - (pageIndex - 1) * getOnePageOffset())
     }
   }
 
@@ -114,11 +117,21 @@
   function resetScaleAndOffset () {
     scale = 1
     offsetX = 0
+    offsetY = 0
+    // scrollOffset = 0
     set(`${bookId}-scale`, scale)
     set(`${bookId}-offset-x`, offsetX)
   }
-  
 
+  async function saveMode () {
+    await set(`${bookId}-mode`, mode)
+  }
+
+  async function handleModeSwitch () {
+    // mode = mode === 'horizontal' ? 'vertical' : 'horizontal'
+    await saveMode()
+  }
+  
   $:isLeftMouseDown || !inited
     ? (() => {
         console.log('instant')
@@ -179,15 +192,20 @@
 
   let progress = 1
   let offsetX = 0
+  let offsetY = 0
   function handleMouseMove (event: MouseEvent) {
     if (isLeftMouseDown) {
-      offsetX += event.movementX
-      scrollOffset -= event.movementY
-
-      isNotClick = true
-
-      throttledSaveOffsetX(offsetX)
-      // throttledSaveOffset(event.clientX)
+      if (mode === 'vertical') {
+        offsetX += event.movementX
+        scrollOffset -= event.movementY
+        isNotClick = true
+        throttledSaveOffsetX(offsetX)
+      } else {
+        offsetY += event.movementY
+        scrollOffset -= event.movementX
+        isNotClick = true
+        throttledSaveOffsetY(offsetY)
+      }
     }
   }
 
@@ -201,17 +219,32 @@
         oldTouchY = event.touches[0].clientY
       }
 
-      if (
-        !canFreeMove &&
-        Math.abs(event.touches[0].clientX - oldTouchX) < 100) {
-        console.log('not free move')
+      if (mode === 'vertical') {
+        if (
+          !canFreeMove &&
+          Math.abs(event.touches[0].clientX - oldTouchX) < 100) {
+          console.log('not free move')
+        } else {
+          canFreeMove = true
+          // oldTouchX = oldTouchX - event.touches[0].clientX
+          offsetX += event.touches[0].clientX - oldTouchX
+          throttledSaveOffsetX(offsetX)
+          oldTouchX = event.touches[0].clientX
+        }
       } else {
-        canFreeMove = true
-        // oldTouchX = oldTouchX - event.touches[0].clientX
-        offsetX += event.touches[0].clientX - oldTouchX
-        throttledSaveOffsetX(offsetX)
-        oldTouchX = event.touches[0].clientX
+        if (
+          !canFreeMove &&
+          Math.abs(event.touches[0].clientY - oldTouchY) < 100) {
+          console.log('not free move')
+        } else {
+          canFreeMove = true
+          // oldTouchY = oldTouchY - event.touches[0].clientY
+          offsetY += event.touches[0].clientY - oldTouchY
+          throttledSaveOffsetY(offsetY)
+          oldTouchY = event.touches[0].clientY
+        }
       }
+
 
       isNotClick = true
     }
@@ -221,7 +254,12 @@
     set(`${bookId}-offset-x`, offsetX)
   }
 
+  function saveOffsetY (offsetY: number) {
+    set(`${bookId}-offset-y`, offsetY)
+  }
+
   const throttledSaveOffsetX = throttle<typeof saveOffsetX>(saveOffsetX, 100)
+  const throttledSaveOffsetY = throttle<typeof saveOffsetY>(saveOffsetY, 100)
 
   function handleMouseLeave () {
     isLeftMouseDown = false
@@ -254,21 +292,36 @@
 
     scale = await get(`${bookId}-scale`) ?? 1
     offsetX = await get(`${bookId}-offset-x`) ?? 0
+    offsetY = await get(`${bookId}-offset-y`) ?? 0
 
     const viewport = page.getViewport({ scale })
-    pdfPageHeight = viewport.height
+    // pdfPageHeight = viewport.height
+    pdfPageSize = {
+      width: viewport.width,
+      height: viewport.height
+    }
 
     const bookProgress = book?.progress ?? 1
-    progress = bookProgress
+    progress = Math.max(1, Math.min(bookProgress, p.numPages))
 
-    console.log(await get(`${bookId}-offset-y`))
+    // console.log(await get(`${bookId}-offset-y`))
 
-    let scrollOffsetY = (await get(`${bookId}-offset-y`)) ?? 0
-    if (isNaN(scrollOffsetY)) {
-      scrollOffsetY = 0
+    // let scrollOffsetY = (await get(`${bookId}-offset-y`)) ?? 0
+    // if (isNaN(scrollOffsetY)) {
+    //   scrollOffsetY = 0
+    // }
+
+    let extScrollOffset = 0
+    if (mode === 'vertical') {
+      extScrollOffset = (await get(`${bookId}-offset-y`)) ?? 0
+    } else {
+      extScrollOffset = (await get(`${bookId}-offset-x`)) ?? 0
     }
-  
-    scrollOffset = (bookProgress - 1) * pdfPageHeight + scrollOffsetY
+
+    // FIXME: fix this
+    // const scrollOffsetY = 0
+    mode = await get(`${bookId}-mode`) ?? await get('app:defaultDirection') ?? 'vertical'
+    scrollOffset = (bookProgress - 1) * getOnePageOffset() + extScrollOffset
     pdf = p
 
 
@@ -281,6 +334,7 @@
 
 
   let height: number = 0
+  let width: number = 0
   let scrollOffset: number = 0
 
   let isMenuShown = false
@@ -291,9 +345,9 @@
   async function setScrollOffsetByProgress () {
     scrollToBehaviour = 'instant'
     setTimeout(async () => {
-      scrollOffset = (progress - 1) * pdfPageHeight +
+      scrollOffset = (progress - 1) * getOnePageOffset() +
       // prevent scale change issue
-      (await get(`${bookId}-offset-y`) % pdfPageHeight) ??
+      // (await get(`${bookId}-offset-y`) % pdfPageHeight) ??
       0
       await saveScrollOffset()
       scrollToBehaviour = 'smooth'
@@ -319,27 +373,9 @@
     return result as ArrayBuffer
   }
 
-  async function downloadBook () {
-    const buffer = await getBookBuffer(bookId)
-    const blob = new Blob([buffer], { type: 'application/pdf' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${book?.title}.pdf`
-    a.click()
-    URL.revokeObjectURL(url)
-  }
 
-  async function printBook () {
-    const buffer = await getBookBuffer(bookId)
-    const blob = new Blob([buffer], { type: 'application/pdf' })
-    const url = URL.createObjectURL(blob)
-    const iframe = document.createElement('iframe')
-    iframe.style.display = 'none'
-    iframe.src = url
-    document.body.appendChild(iframe)
-    iframe!.contentWindow!.print()
-    URL.revokeObjectURL(url)
+  function getOnePageOffset () {
+    return mode === 'vertical' ? (pdfPageSize.height) : (pdfPageSize.width)
   }
 
 </script>
@@ -360,7 +396,7 @@
   use:pinch
   on:pinch="{handlePinch}"
   
-
+  bind:clientWidth={width}
   bind:clientHeight={height}
 >
 
@@ -370,11 +406,11 @@
     <div id="pdf-viewer">
       <VirtualList
         
-        height={height}
-        width="auto"
+        height={(mode === 'vertical' ? height + 0 : height + 'px')}
+        width={(mode === 'vertical' ? width + 'px' : width + 0)}
         itemCount={pdf.numPages}
-        itemSize={pdfPageHeight}
-        
+        itemSize={mode === 'vertical' ? pdfPageSize.height : pdfPageSize.width}
+        scrollDirection={mode}
         getKey={index => index}
         scrollToBehaviour={scrollToBehaviour}
         scrollOffset={scrollOffset}
@@ -387,22 +423,11 @@
         <div slot="item" let:index let:style {style} class="page">
           {#if inited}
           <Page 
-            on:prev={() => {
-              console.log('prev', index)
-              console.log('prev', scrollOffset)
-
-              scrollOffset -= pdfPageHeight
-              saveScrollOffset()
-            }}
-            on:next={() => {
-              console.log('next', index)
-              console.log('next', scrollOffset)
-
-              scrollOffset += pdfPageHeight
-              saveScrollOffset()
-            }}
-            {offsetX}
-            {scale} {pdf} pageIndex={index + 1} bind:height={pdfPageHeight} />
+            offsetX={mode === 'horizontal' ? 0 : offsetX}
+            offsetY={mode === 'vertical' ? 0 : offsetY}
+            {scale} {pdf} pageIndex={index + 1} 
+              bind:size={pdfPageSize}
+            />
           {/if}
         </div>
         
@@ -412,12 +437,13 @@
       {#if isMenuShown}
         <div class="menu top" on:click={e => { e.stopPropagation() }}> 
           <TopAppBar 
+            bind:mode={mode}
+            on:modeSwitch={handleModeSwitch}
             book={book} 
             scaleUp={scaleUp} 
             scaleDown={scaleDown}
             resetScaleAndOffset={resetScaleAndOffset}
-            downloadBook={downloadBook}
-            printBook={printBook}
+            getBookBuffer={getBookBuffer}
             updateBookState={updateBookState}
           />
         </div>
@@ -460,11 +486,11 @@
 
       <PrevNextButton
         prev={() => {
-          scrollOffset -= pdfPageHeight
+          scrollOffset -= getOnePageOffset()
           saveScrollOffset()
         }}
         next={() => {
-          scrollOffset += pdfPageHeight
+          scrollOffset += getOnePageOffset()
           saveScrollOffset()
         }}
       />
@@ -509,6 +535,15 @@
   }
 
 
+  #pdf-viewer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    overflow: hidden;
+  }
 
 
   .menu {
