@@ -36,7 +36,10 @@
           {message}
         </div>
       {/if}
-      <div style="height: 80px; width: 80px;overflow: hidden;">
+      <div style="
+        height: 80px; width: 80px;overflow: hidden;
+        display:flex; justify-content: center; align-items: center;
+      ">
         <CircularProgress style="height: 64px; width: 64px;" indeterminate />
       </div>
     </div>
