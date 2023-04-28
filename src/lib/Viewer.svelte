@@ -40,6 +40,11 @@
       }
 
       // await set(`${bookId}-offset-y`, scrollOffset - (pageIndex - 1) * getOnePageOffset())
+      if (mode === 'horizontal') {
+        await set(`${bookId}-offset-x`, scrollOffset - (pageIndex - 1) * getOnePageOffset())
+      } else {
+        await set(`${bookId}-offset-y`, scrollOffset - (pageIndex - 1) * getOnePageOffset())
+      }
     }
   }
 
@@ -318,6 +323,10 @@
       extScrollOffset = (await get(`${bookId}-offset-x`)) ?? 0
     }
 
+    if (isNaN(extScrollOffset)) {
+      extScrollOffset = 0
+    }
+
     // FIXME: fix this
     // const scrollOffsetY = 0
     mode = await get(`${bookId}-mode`) ?? await get('app:defaultDirection') ?? 'vertical'
@@ -344,11 +353,18 @@
 
   async function setScrollOffsetByProgress () {
     scrollToBehaviour = 'instant'
+
+    let extScrollOffset = 0
+    if (mode === 'vertical') {
+      extScrollOffset = (((await get(`${bookId}-offset-y`)) ?? 0) % pdfPageSize.height)
+    } else {
+      extScrollOffset = (((await get(`${bookId}-offset-x`)) ?? 0) % pdfPageSize.width)
+    }
+
     setTimeout(async () => {
       scrollOffset = (progress - 1) * getOnePageOffset() +
       // prevent scale change issue
-      // (await get(`${bookId}-offset-y`) % pdfPageHeight) ??
-      0
+      extScrollOffset
       await saveScrollOffset()
       scrollToBehaviour = 'smooth'
     }, 100)
