@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-
+// --version
 importScripts('/workbox-sw.js')
 importScripts('/files.js')
 workbox.precaching.precacheAndRoute(files)

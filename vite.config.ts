@@ -41,6 +41,10 @@ export default defineConfig({
         })
 
         fs.writeFileSync('./dist/files.js', `const files = ${JSON.stringify(revisionFiles)}`)
+
+        // add version to sw.js
+        const sw = fs.readFileSync('./dist/sw.js', 'utf-8')
+        fs.writeFileSync('./dist/sw.js', sw.replace('// --version', `// --version = ${+new Date()}`))
       }
     }
   }],
