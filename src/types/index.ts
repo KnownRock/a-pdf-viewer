@@ -75,7 +75,7 @@ export interface S3Config {
   prefix: string
 }
 
-export type MessageType = 'error' | 'info' | 'success' | 'warning'
+export type MessageType = 'success' | 'warning' | 'error' | 'info' | 'success-presist' | 'warning-presist' | 'error-presist' | 'info-presist'
 
 export interface ReadModeResult {
   'text': string | undefined
