@@ -293,21 +293,34 @@
 
     const buffer = result as ArrayBuffer
     const p = await pdfjsLib.getDocument(buffer).promise
-    const page = await p.getPage(1)
+    
 
     scale = await get(`${bookId}-scale`) ?? 1
     offsetX = await get(`${bookId}-offset-x`) ?? 0
     offsetY = await get(`${bookId}-offset-y`) ?? 0
 
+    if(isNaN(scale)) {
+      scale = 1
+    }
+    if(isNaN(offsetX)) {
+      offsetX = 0
+    }
+    if(isNaN(offsetY)) {
+      offsetY = 0
+    }
+
+    const bookProgress = book?.progress ?? 1
+    progress = Math.max(1, Math.min(bookProgress, p.numPages))
+
+    const page = await p.getPage(progress)
     const viewport = page.getViewport({ scale })
+    console.log(viewport)
     // pdfPageHeight = viewport.height
     pdfPageSize = {
       width: viewport.width,
       height: viewport.height
     }
-
-    const bookProgress = book?.progress ?? 1
-    progress = Math.max(1, Math.min(bookProgress, p.numPages))
+    
 
     // console.log(await get(`${bookId}-offset-y`))
 
@@ -315,7 +328,7 @@
     // if (isNaN(scrollOffsetY)) {
     //   scrollOffsetY = 0
     // }
-
+    mode = await get(`${bookId}-mode`) ?? await get('app:defaultDirection') ?? 'vertical'
     let extScrollOffset = 0
     if (mode === 'vertical') {
       extScrollOffset = (await get(`${bookId}-offset-y`)) ?? 0
@@ -327,16 +340,28 @@
       extScrollOffset = 0
     }
 
+    // extScrollOffset = 0
+
     // FIXME: fix this
     // const scrollOffsetY = 0
-    mode = await get(`${bookId}-mode`) ?? await get('app:defaultDirection') ?? 'vertical'
+
     scrollOffset = (bookProgress - 1) * getOnePageOffset() + extScrollOffset
+    console.log(`scrollOffset: ${scrollOffset}, extScrollOffset: ${extScrollOffset}, bookProgress: ${bookProgress}, getOnePageOffset(): ${getOnePageOffset()}`)
+    
     pdf = p
 
 
-    setTimeout(() => {
+    setTimeout(async () => {
       inited = true
     }, 300)
+
+    // setTimeout(async () => {
+    //   for(let i =1; i<18;i++){
+    //     const page = await p.getPage(i)
+    //     const viewport = page.getViewport({ scale })
+    //     console.log(viewport.height)
+    //   }
+    // }, 3300)
   }
 
   $: bookId && load()
@@ -431,8 +456,10 @@
         scrollToBehaviour={scrollToBehaviour}
         scrollOffset={scrollOffset}
         overscanCount={inited ? 1 : 0}
+        
 
         on:afterScroll={async (event) => {
+          console.log('afterScroll', event.detail.offset)
           scrollOffset = event.detail.offset
         }}
       >
