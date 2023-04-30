@@ -166,7 +166,7 @@
   }
 
   function handleMouseUp (event: MouseEvent) {
-    if (event.button === 0) {
+    if (event.button === 0 && isLeftMouseDown) {
       isLeftMouseDown = false
 
       setTimeout(() => {
@@ -491,6 +491,7 @@
 
                 onclick={e => {
                   console.log('onclick', e)
+                  
                   e.stopPropagation()
                 }}
 
