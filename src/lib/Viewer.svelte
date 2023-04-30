@@ -309,6 +309,8 @@
       offsetY = 0
     }
 
+    console.log(book)
+
     const bookProgress = book?.progress ?? 1
     progress = Math.max(1, Math.min(bookProgress, p.numPages))
     
@@ -441,7 +443,6 @@
         
 
         on:afterScroll={async (event) => {
-          console.log('afterScroll', event.detail.offset)
           scrollOffset = event.detail.offset
         }}
       >
