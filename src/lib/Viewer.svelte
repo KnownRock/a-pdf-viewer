@@ -311,23 +311,16 @@
 
     const bookProgress = book?.progress ?? 1
     progress = Math.max(1, Math.min(bookProgress, p.numPages))
+    
+    console.log(`bookProgress: ${bookProgress}, progress: ${progress}, p.numPages: ${p.numPages}`)
 
     const page = await p.getPage(progress)
     const viewport = page.getViewport({ scale })
-    console.log(viewport)
-    // pdfPageHeight = viewport.height
     pdfPageSize = {
       width: viewport.width,
       height: viewport.height
     }
     
-
-    // console.log(await get(`${bookId}-offset-y`))
-
-    // let scrollOffsetY = (await get(`${bookId}-offset-y`)) ?? 0
-    // if (isNaN(scrollOffsetY)) {
-    //   scrollOffsetY = 0
-    // }
     mode = await get(`${bookId}-mode`) ?? await get('app:defaultDirection') ?? 'vertical'
     let extScrollOffset = 0
     if (mode === 'vertical') {
@@ -340,10 +333,6 @@
       extScrollOffset = 0
     }
 
-    // extScrollOffset = 0
-
-    // FIXME: fix this
-    // const scrollOffsetY = 0
 
     scrollOffset = (bookProgress - 1) * getOnePageOffset() + extScrollOffset
     console.log(`scrollOffset: ${scrollOffset}, extScrollOffset: ${extScrollOffset}, bookProgress: ${bookProgress}, getOnePageOffset(): ${getOnePageOffset()}`)
@@ -355,13 +344,6 @@
       inited = true
     }, 300)
 
-    // setTimeout(async () => {
-    //   for(let i =1; i<18;i++){
-    //     const page = await p.getPage(i)
-    //     const viewport = page.getViewport({ scale })
-    //     console.log(viewport.height)
-    //   }
-    // }, 3300)
   }
 
   $: bookId && load()
